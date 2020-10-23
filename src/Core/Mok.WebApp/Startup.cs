@@ -23,6 +23,12 @@ namespace Mok.WebApp
         {
             // DbCtx
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddMvc()
+                .AddRazorPagesOptions(options =>
+                {
+                    options.RootDirectory = "/Manage";
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
