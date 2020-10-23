@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{ 
+    var menu1NavsJson = "";
+}
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -13,7 +16,9 @@
 <body>
     @Html.AntiForgeryToken()
     <div id="app" v-cloak>
+        <v-app light>
 
+        </v-app>
     </div>
     <environment include="Development">
         <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
@@ -25,6 +30,18 @@
     </environment>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     @RenderSection("ComponentScripts", required: false)
+    <script>
+        let adminMixin = {
+            data: function () {
+                return {
+                    adminNavs: [
+                        { icon: 'folder', text: 'Categories', url: '/admin/categories', active: false },
+                    ],
+                    menu1Navs: @Html.Raw(menu1NavsJson)
+                };
+            }
+        };
+    </script>
     <script src="~/admin/js/admin.js" asp-append-version="true"></script>
 </body>
 </html>
