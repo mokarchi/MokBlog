@@ -8,4 +8,8 @@
     <ProjectReference Include="..\Mok.Blog\Mok.Blog.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+  </ItemGroup>
+
 </Project>
