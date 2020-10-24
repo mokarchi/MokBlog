@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.Blog", "src\Core\Mok.Bl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.WebApp", "src\Core\Mok.WebApp\Mok.WebApp.csproj", "{77D1CD69-6E99-4CC5-923E-A47172490999}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mok.Web", "src\Core\Mok.Web\Mok.Web.csproj", "{983ED279-B7BD-43DA-A4C2-F1A3BDD1CD6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.Web", "src\Core\Mok.Web\Mok.Web.csproj", "{983ED279-B7BD-43DA-A4C2-F1A3BDD1CD6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
