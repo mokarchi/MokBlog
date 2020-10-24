@@ -38,7 +38,6 @@ namespace Mok.WebApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseAdminPanel();
             app.UseStaticFiles();
             app.UseRouting();
 
