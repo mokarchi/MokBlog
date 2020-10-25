@@ -1,5 +1,5 @@
 ﻿@{ 
-    var menu1NavsJson = "";
+    var menu1NavsJson = "[{'id':1,'text':'Blog','type':1,'url':'/blog'},{'id':3,'text':'Docs','type':0,'url':'/docs'},{'id':7,'text':'About','type':0,'url':'/about'}]";
 }
 <!DOCTYPE html>
 <html>
@@ -21,7 +21,8 @@
                                  v-model="drawer"
                                  width="230"
                                  fixed
-                                 app>
+                                 app
+                                 >
                 <v-list dense style="padding-top:10px">
                     <template v-for="nav in adminNavs">
                         <v-list-tile :href="nav.url" :value="nav.active" active-class="admin-active-nav">
@@ -47,10 +48,11 @@
                        dark
                        app
                        dense
-                       fixed>
+                       fixed
+                       >
                 <v-toolbar-side-icon @@click.stop="drawer = !drawer"></v-toolbar-side-icon>
                 <img style="margin-left:12px;background-color: white" src="~/admin/img/logo.png" />
-                <span class="title ml-2 mr-5 font-weight-light">FANRAY</span>
+                <span class="title ml-2 mr-5 font-weight-light">MokBlog</span>
                 <v-spacer></v-spacer>
                 <v-menu light offset-y left transition="scale-transition">
                     <v-btn icon slot="activator">
@@ -115,8 +117,19 @@
             data: function () {
                 return {
                     adminNavs: [
+                        { icon: 'insert_drive_file', text: 'Posts', url: '/admin/posts', active: false, actionIcon: 'add_circle', actionLink: '/admin/compose/post' },
+                        { icon: 'description', text: 'Pages', url: '/admin/pages', active: false, actionIcon: 'add_circle', actionLink: '/admin/compose/page' },
+                        { icon: 'insert_photo', text: 'Media', url: '/admin/media', active: false },
                         { icon: 'folder', text: 'Categories', url: '/admin/categories', active: false },
-                    ]
+                        { icon: 'label', text: 'Tags', url: '/admin/tags', active: false },
+                        { icon: 'navigation', text: 'Navigation', url: '/admin/navigation', active: false },
+                        { icon: 'palette', text: 'Themes', url: '/admin/themes', active: false },
+                        { icon: 'settings_input_hdmi', text: 'Plugins', url: '/admin/plugins', active: false },
+                        { icon: 'widgets', text: 'Widgets', url: '/admin/widgets', active: false },
+                        { icon: 'supervisor_account', text: 'Users', url: '/admin/users', active: false },
+                        { icon: 'settings', text: 'Settings', url: '/admin/settings', active: false },
+                    ],
+                    menu1Navs: @Html.Raw(menu1NavsJson)
                 };
             }
         };

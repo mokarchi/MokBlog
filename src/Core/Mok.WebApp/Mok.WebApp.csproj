@@ -20,4 +20,8 @@
     <ProjectReference Include="..\Mok.Web\Mok.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\admin\img\" />
+  </ItemGroup>
+
 </Project>
