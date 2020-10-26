@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Mok.Blog.Services.Interfaces;
 using Mok.Data;
+using Scrutor;
 
 namespace Mok.WebApp
 {
@@ -23,6 +25,14 @@ namespace Mok.WebApp
         {
             // DbCtx
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+            // Scrutor 
+            services.Scan(scan => scan
+              .FromAssembliesOf(typeof(ICategoryService))
+              .AddClasses()
+              .UsingRegistrationStrategy(RegistrationStrategy.Skip) // prevent added to add again
+              .AsImplementedInterfaces()
+              .WithScopedLifetime());
 
             services.AddMvc()
                 .AddRazorPagesOptions(options =>
