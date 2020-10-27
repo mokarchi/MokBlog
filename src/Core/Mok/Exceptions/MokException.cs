@@ -27,5 +27,14 @@ namespace Mok.Exceptions
         {
             ExceptionType = exceptionType;
         }
+
+        /// <summary>
+        /// Thrown with a message.
+        /// </summary>
+        /// <param name="message"></param>
+        public MokException(string message)
+            : base(message)
+        {
+        }
     }
 }
