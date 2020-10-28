@@ -29,6 +29,9 @@ namespace Mok.WebApp
                 {
                     options.RootDirectory = "/Manage";
                 });
+
+            // To make ajax work with razor pages
+            services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
