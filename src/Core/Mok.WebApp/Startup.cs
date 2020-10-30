@@ -7,6 +7,8 @@ using Microsoft.Extensions.Hosting;
 using Mok.Blog.Services.Interfaces;
 using Mok.Data;
 using Scrutor;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Mok.WebApp
 {
@@ -39,6 +41,13 @@ namespace Mok.WebApp
                 {
                     options.RootDirectory = "/Manage";
                 });
+
+            // JsonConvert
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
 
             // To make ajax work with razor pages
             services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
