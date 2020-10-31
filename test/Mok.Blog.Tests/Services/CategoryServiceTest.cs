@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Mok.Blog.Data;
+using Mok.Blog.Models;
 using Mok.Blog.Services;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
 using Moq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Mok.Blog.Tests.Services
@@ -19,6 +22,11 @@ namespace Mok.Blog.Tests.Services
             // logger
             var serviceProvider = new ServiceCollection().AddMemoryCache().AddLogging().BuildServiceProvider();
             var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<CategoryService>();
+
+            // setup the default category in db
+            var defaultCat = new Category { Id = 1, Title = "Web Development", Slug = "web-development" };
+            catRepoMock.Setup(c => c.GetAsync(1)).Returns(Task.FromResult(defaultCat));
+            catRepoMock.Setup(r => r.GetListAsync()).Returns(Task.FromResult(new List<Category> { defaultCat }));
 
             // cat service
             categoryService = new CategoryService(catRepoMock.Object, logger);
