@@ -24,12 +24,28 @@ namespace Mok.Blog.Tests.Services
             categoryService = new CategoryService(catRepoMock.Object, logger);
         }
 
+        /// <summary>
+        /// Creates a category with empty title will throw MokException.
+        /// </summary>
+        /// <param name="title"></param>
         [Theory]
         [InlineData(null)]
         [InlineData("")]
         public async void Create_category_with_empty_title_throws_MokException(string title)
         {
             await Assert.ThrowsAsync<MokException>(() => categoryService.CreateAsync(title));
+        }
+
+        /// <summary>
+        /// Creates a category with a title that already exists throws MokException.
+        /// </summary>
+        [Fact]
+        public async void Create_category_throws_MokException_if_title_already_exists()
+        {
+            var title = "web development";
+            var ex = await Assert.ThrowsAsync<MokException>(() => categoryService.CreateAsync(title));
+
+            Assert.Equal("'web development' already exists.", ex.Message);
         }
     }
 }
