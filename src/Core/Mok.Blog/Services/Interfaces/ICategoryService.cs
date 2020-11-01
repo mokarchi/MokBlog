@@ -28,5 +28,7 @@ namespace Mok.Blog.Services.Interfaces
         /// </remarks>
         /// <exception cref="MokException">If the id to be deleted is the default category.</exception>
         Task DeleteAsync(int id);
+
+        Task<Category> UpdateAsync(Category category);
     }
 }

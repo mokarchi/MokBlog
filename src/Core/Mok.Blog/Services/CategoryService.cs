@@ -81,6 +81,36 @@ namespace Mok.Blog.Services
             await categoryRepository.DeleteAsync(id);
         }
 
+        public async Task<Category> UpdateAsync(Category category)
+        {
+            if(category == null || category.Id <=0 || category.Title.IsNullOrEmpty())
+            {
+                throw new MokException($"Invalid category to update.");
+            }
+
+            category.Title = PrepareTitle(category.Title);
+
+            // make sure it is unique
+            var allCats = await GetAllAsync();
+            allCats.RemoveAll(c => c.Id == category.Id);
+            if (allCats.Any(c => c.Title.Equals(category.Title, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                throw new MokException($"'{category.Title}' already exists.");
+            }
+
+            var entity = await categoryRepository.GetAsync(category.Id);
+            entity.Title = category.Title;
+            entity.Slug = BlogUtil.SlugifyTaxonomy(category.Title, SLUG_MAXLEN, allCats.Select(c => c.Slug));
+            entity.Description = Util.CleanHtml(category.Description);
+            entity.Count = category.Count;
+
+            await categoryRepository.UpdateAsync(category);
+
+            // return entity
+            logger.LogDebug("Updated {@Category}", entity);
+            return entity;
+        }
+
         /// <summary>
         /// Cleans category title from any html and shortens it if exceed max allow length.
         /// </summary>

@@ -55,5 +55,23 @@ namespace Mok.WebApp.Manage.Admin
         {
             await _catSvc.DeleteAsync(id);
         }
+
+        /// <summary>
+        /// POST to udpate an existing category.
+        /// </summary>
+        /// <param name="category"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostUpdateAsync([FromBody]Category category)
+        {
+            try
+            {
+                var cat = await _catSvc.UpdateAsync(category);
+                return new JsonResult(cat);
+            }
+            catch (MokException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
