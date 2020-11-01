@@ -28,6 +28,11 @@ namespace Mok.WebApp.Manage.Admin
             CategoryListJsonStr = JsonConvert.SerializeObject(cat);
         }
 
+        /// <summary>
+        /// POST to create a new category.
+        /// </summary>
+        /// <param name="category"></param>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostAsync([FromBody]Category category)
         {
             try
@@ -39,6 +44,16 @@ namespace Mok.WebApp.Manage.Admin
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// DELETE a category by id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task OnDeleteAsync(int id)
+        {
+            await _catSvc.DeleteAsync(id);
         }
     }
 }

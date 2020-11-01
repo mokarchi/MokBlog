@@ -19,5 +19,14 @@ namespace Mok.Blog.Services.Interfaces
         /// <returns>A category with id.</returns>
         /// <exception cref="MokException"></exception>
         Task<Category> CreateAsync(string title, string description = null);
+
+        /// <summary>
+        /// Deletes a <see cref="Category"/> by id and re-categorize its posts to the default category.
+        /// </summary>
+        /// <remarks>
+        /// Admin console will call this by passing in an id of the category to be deleted.
+        /// </remarks>
+        /// <exception cref="MokException">If the id to be deleted is the default category.</exception>
+        Task DeleteAsync(int id);
     }
 }

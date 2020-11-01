@@ -75,6 +75,12 @@ namespace Mok.Blog.Services
             return category;
         }
 
+        public async Task DeleteAsync(int id)
+        {
+            // delete
+            await categoryRepository.DeleteAsync(id);
+        }
+
         /// <summary>
         /// Cleans category title from any html and shortens it if exceed max allow length.
         /// </summary>
