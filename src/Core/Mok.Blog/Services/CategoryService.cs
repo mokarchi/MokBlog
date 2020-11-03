@@ -92,6 +92,9 @@ namespace Mok.Blog.Services
         {
             // delete
             await categoryRepository.DeleteAsync(id);
+
+            // invalidate cache
+            await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
         }
 
         public async Task<Category> UpdateAsync(Category category)
@@ -118,6 +121,9 @@ namespace Mok.Blog.Services
             entity.Count = category.Count;
 
             await categoryRepository.UpdateAsync(category);
+
+            // remove cache
+            await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
 
             // return entity
             logger.LogDebug("Updated {@Category}", entity);
