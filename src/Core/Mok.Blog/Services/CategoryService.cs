@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using Mok.Blog.Data;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
@@ -16,10 +17,13 @@ namespace Mok.Blog.Services
     {
         private readonly ICategoryRepository categoryRepository;
         private readonly ILogger<CategoryService> logger;
+        private readonly IDistributedCache cache;
         public CategoryService(ICategoryRepository categoryRepository,
+                               IDistributedCache cache,
                                ILogger<CategoryService> logger)
         {
             this.categoryRepository = categoryRepository;
+            this.cache = cache;
             this.logger = logger;
         }
 
@@ -33,9 +37,15 @@ namespace Mok.Blog.Services
         /// </summary>
         public const int SLUG_MAXLEN = 24;
 
+        /// <summary>
+        /// Returns all categories, cached after calls to DAL.
+        /// </summary>
         public async Task<List<Category>> GetAllAsync()
         {
-            return await categoryRepository.GetListAsync();
+            return await cache.GetAsync(BlogCache.KEY_ALL_CATS, BlogCache.Time_AllCats, async () =>
+            {
+                return await categoryRepository.GetListAsync();
+            });
         }
 
         /// <summary>
