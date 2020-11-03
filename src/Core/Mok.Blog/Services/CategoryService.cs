@@ -81,6 +81,9 @@ namespace Mok.Blog.Services
             // create
             category = await categoryRepository.CreateAsync(category);
 
+            // remove cache
+            await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
+
             logger.LogDebug("Created {@Category}", category);
             return category;
         }
