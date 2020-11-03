@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Mok.Blog.Data;
 using Mok.Blog.Models;
 using Mok.Blog.Services;
@@ -16,11 +19,13 @@ namespace Mok.Blog.Tests.Services
     {
         private readonly ICategoryService categoryService;
         private readonly Mock<ICategoryRepository> catRepoMock = new Mock<ICategoryRepository>();
+        private readonly IDistributedCache cache;
 
         public CategoryServiceTest()
         {
             // logger
             var serviceProvider = new ServiceCollection().AddMemoryCache().AddLogging().BuildServiceProvider();
+            cache = new MemoryDistributedCache(serviceProvider.GetService<IOptions<MemoryDistributedCacheOptions>>());
             var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<CategoryService>();
 
             // setup the default category in db
@@ -29,7 +34,7 @@ namespace Mok.Blog.Tests.Services
             catRepoMock.Setup(r => r.GetListAsync()).Returns(Task.FromResult(new List<Category> { defaultCat }));
 
             // cat service
-            categoryService = new CategoryService(catRepoMock.Object, logger);
+            categoryService = new CategoryService(catRepoMock.Object, cache, logger);
         }
 
         /// <summary>
