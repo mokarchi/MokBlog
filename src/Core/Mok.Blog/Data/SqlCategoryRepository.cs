@@ -36,5 +36,16 @@ namespace Mok.Blog.Data
                     Description = c.Description
                 }).OrderBy(c => c.Title).ToListAsync();
         }
+
+        public async Task DeleteAsync(int id, int defaultCategoryId)
+        {
+            if (id == defaultCategoryId) return;
+
+            // remove it
+            var category = await _entities.SingleAsync(c => c.Id == id);
+            _db.Remove(category);
+
+            await _db.SaveChangesAsync();
+        }
     }
 }

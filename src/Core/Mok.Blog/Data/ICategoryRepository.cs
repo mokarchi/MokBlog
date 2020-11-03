@@ -12,5 +12,11 @@ namespace Mok.Blog.Data
         /// The returned list are order by alphabetically on <see cref="Category.Title"/>.
         /// </summary>
         Task<List<Category>> GetListAsync();
+
+        /// <summary>
+        /// Deletes a <see cref="Category"/> by id and re-categorize its posts to the given 
+        /// default category id.
+        /// </summary>
+        Task DeleteAsync(int id, int defaultCategoryId);
     }
 }

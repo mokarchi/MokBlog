@@ -13,6 +13,17 @@ namespace Mok.Blog.Services.Interfaces
         Task<List<Category>> GetAllAsync();
 
         /// <summary>
+        /// Returns a <see cref="Category"/> by id, throws FanException is category not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Admin site will call this by passing in the id of the category.
+        /// </remarks>
+        /// <exception cref="MokException">If category is not found.</exception>
+        Task<Category> GetAsync(int id);
+
+        /// <summary>
         /// Creates a <see cref="Category"/>, throws <see cref="MokException"/> if category title 
         /// fails validation or exists already.
         /// </summary>

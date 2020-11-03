@@ -49,6 +49,24 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
+        /// Returns category by id, throws <see cref="MokException"/> if category with id is not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<Category> GetAsync(int id)
+        {
+            var cats = await GetAllAsync();
+            var cat = cats.SingleOrDefault(c => c.Id == id);
+            if (cat == null)
+            {
+                throw new MokException(EExceptionType.ResourceNotFound,
+                    $"Category with id {id} is not found.");
+            }
+
+            return cat;
+        }
+
+        /// <summary>
         /// Creates a new <see cref="Category"/>.
         /// </summary>
         /// <param name="category">The category with data to be created.</param>
@@ -91,7 +109,7 @@ namespace Mok.Blog.Services
         public async Task DeleteAsync(int id)
         {
             // delete
-            await categoryRepository.DeleteAsync(id);
+            await categoryRepository.DeleteAsync(id, 1);
 
             // invalidate cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);

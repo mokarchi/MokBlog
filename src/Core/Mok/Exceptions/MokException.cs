@@ -36,5 +36,15 @@ namespace Mok.Exceptions
             : base(message)
         {
         }
+
+        /// <summary>
+        /// Thrown with a <see cref="EExceptionType"/>.
+        /// </summary>
+        /// <param name="exceptionType"></param>
+        public MokException(EExceptionType exceptionType, string message = "")
+            : base(message)
+        {
+            ExceptionType = exceptionType;
+        }
     }
 }
