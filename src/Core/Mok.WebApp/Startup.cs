@@ -28,6 +28,9 @@ namespace Mok.WebApp
             // DbCtx
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+            // Caching
+            services.AddDistributedMemoryCache();
+
             // Scrutor 
             services.Scan(scan => scan
               .FromAssembliesOf(typeof(ICategoryService))
