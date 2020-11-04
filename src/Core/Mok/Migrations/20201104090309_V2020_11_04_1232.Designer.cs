@@ -9,8 +9,8 @@ using Mok.Data;
 namespace Mok.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201021182233_V2020_10_21_2151")]
-    partial class V2020_10_21_2151
+    [Migration("20201104090309_V2020_11_04_1232")]
+    partial class V2020_11_04_1232
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -48,6 +48,34 @@ namespace Mok.Migrations
                         .HasAnnotation("SqlServer:Clustered", true);
 
                     b.ToTable("Blog_Category");
+                });
+
+            modelBuilder.Entity("Mok.Data.Meta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(256)")
+                        .HasMaxLength(256);
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id")
+                        .HasAnnotation("SqlServer:Clustered", false);
+
+                    b.HasIndex("Type", "Key")
+                        .IsUnique()
+                        .HasAnnotation("SqlServer:Clustered", true);
+
+                    b.ToTable("Core_Meta");
                 });
 #pragma warning restore 612, 618
         }
