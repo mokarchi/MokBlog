@@ -40,6 +40,20 @@ namespace Mok.Blog.Services.Interfaces
         /// <exception cref="MokException">If the id to be deleted is the default category.</exception>
         Task DeleteAsync(int id);
 
+        /// <summary>
+        /// Updates a <see cref="Category"/>, throws <see cref="MokException"/> if category title 
+        /// or slug fails validation or exists already.
+        /// </summary>
+        /// <param name="category"></param>
+        /// <returns></returns>
+        /// <exception cref="FanException"></exception>
         Task<Category> UpdateAsync(Category category);
+
+        /// <summary>
+        /// Sets the id to default category.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task SetDefaultAsync(int id);
     }
 }

@@ -128,7 +128,7 @@
             data: function () {
                 return {
                     categories: @Html.Raw(Model.CategoryListJsonStr),
-                    defaultCategoryId: 1,
+                    defaultCategoryId: @Model.DefaultCategoryId,
                 };
             }
         };

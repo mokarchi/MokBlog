@@ -6,6 +6,7 @@ using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
 using Mok.Helpers;
+using Mok.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,13 +17,16 @@ namespace Mok.Blog.Services
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository categoryRepository;
+        private readonly ISettingService settingService;
         private readonly ILogger<CategoryService> logger;
         private readonly IDistributedCache cache;
         public CategoryService(ICategoryRepository categoryRepository,
+                               ISettingService settingService,
                                IDistributedCache cache,
                                ILogger<CategoryService> logger)
         {
             this.categoryRepository = categoryRepository;
+            this.settingService = settingService;
             this.cache = cache;
             this.logger = logger;
         }
@@ -108,6 +112,15 @@ namespace Mok.Blog.Services
 
         public async Task DeleteAsync(int id)
         {
+            var blogSettings = await settingService.GetSettingsAsync<BlogSettings>();
+
+            // on the UI there is no delete button on the default cat
+            // therefore when there is only one category left, it'll be the default.
+            if (id == blogSettings.DefaultCategoryId)
+            {
+                throw new MokException("Default category cannot be deleted.");
+            }
+
             // delete
             await categoryRepository.DeleteAsync(id, 1);
 
@@ -146,6 +159,19 @@ namespace Mok.Blog.Services
             // return entity
             logger.LogDebug("Updated {@Category}", entity);
             return entity;
+        }
+
+        /// <summary>
+        /// Sets the id to default category.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task SetDefaultAsync(int id)
+        {
+            await settingService.UpsertSettingsAsync(new BlogSettings
+            {
+                DefaultCategoryId = id,
+            });
         }
 
         /// <summary>

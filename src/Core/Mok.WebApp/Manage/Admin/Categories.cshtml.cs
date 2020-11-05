@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
+using Mok.Settings;
 using Newtonsoft.Json;
 
 namespace Mok.WebApp.Manage.Admin
@@ -11,19 +12,26 @@ namespace Mok.WebApp.Manage.Admin
     public class CategoriesModel : PageModel
     {
         private readonly ICategoryService _catSvc;
+        private readonly ISettingService _settingSvc;
 
-        public CategoriesModel(ICategoryService catService)
+        public CategoriesModel(ICategoryService catService,
+                               ISettingService settingService)
         {
             _catSvc = catService;
+            _settingSvc = settingService;
         }
 
         public string CategoryListJsonStr { get; private set; }
+        public int DefaultCategoryId { get; private set; }
 
         /// <summary>
         /// GET
         /// </summary>
         public async Task OnGetAsync()
         {
+            var blogSettings = await _settingSvc.GetSettingsAsync<BlogSettings>();
+            DefaultCategoryId = blogSettings.DefaultCategoryId;
+
             var cat = await _catSvc.GetAllAsync();
             CategoryListJsonStr = JsonConvert.SerializeObject(cat);
         }
@@ -72,6 +80,16 @@ namespace Mok.WebApp.Manage.Admin
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// POST to set default category.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task OnPostDefaultAsync(int id)
+        {
+            await _catSvc.SetDefaultAsync(id);
         }
     }
 }
