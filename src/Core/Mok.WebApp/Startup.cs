@@ -9,6 +9,8 @@ using Mok.Data;
 using Scrutor;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Mok.Settings;
+using Mok.Blog.Models;
 
 namespace Mok.WebApp
 {
@@ -33,7 +35,7 @@ namespace Mok.WebApp
 
             // Scrutor 
             services.Scan(scan => scan
-              .FromAssembliesOf(typeof(ICategoryService))
+              .FromAssembliesOf(typeof(ISettingService), typeof(BlogSettings))
               .AddClasses()
               .UsingRegistrationStrategy(RegistrationStrategy.Skip) // prevent added to add again
               .AsImplementedInterfaces()
