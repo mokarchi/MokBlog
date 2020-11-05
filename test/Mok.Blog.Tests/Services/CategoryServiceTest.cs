@@ -9,6 +9,7 @@ using Mok.Blog.Models;
 using Mok.Blog.Services;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
+using Mok.Settings;
 using Moq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -29,13 +30,18 @@ namespace Mok.Blog.Tests.Services
             cache = new MemoryDistributedCache(serviceProvider.GetService<IOptions<MemoryDistributedCacheOptions>>());
             var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<CategoryService>();
 
+            // settings
+            var settingSvcMock = new Mock<ISettingService>();
+            //settingSvcMock.Setup(svc => svc.GetSettingsAsync<CoreSettings>()).Returns(Task.FromResult(new CoreSettings()));
+            settingSvcMock.Setup(svc => svc.GetSettingsAsync<BlogSettings>()).Returns(Task.FromResult(new BlogSettings()));
+
             // setup the default category in db
             var defaultCat = new Category { Id = 1, Title = "Web Development", Slug = "web-development" };
             catRepoMock.Setup(c => c.GetAsync(1)).Returns(Task.FromResult(defaultCat));
             catRepoMock.Setup(r => r.GetListAsync()).Returns(Task.FromResult(new List<Category> { defaultCat }));
 
             // cat service
-            categoryService = new CategoryService(catRepoMock.Object, cache, logger);
+            categoryService = new CategoryService(catRepoMock.Object, settingSvcMock.Object, cache, logger);
         }
 
         /// <summary>
