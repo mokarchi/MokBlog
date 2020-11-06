@@ -14,6 +14,13 @@ namespace Mok.Blog.Data
                 entity.HasKey(e => e.Id).IsClustered(clustered: false);
                 entity.HasIndex(e => e.Slug).IsUnique().IsClustered();
             });
+
+            builder.Entity<Tag>(entity =>
+            {
+                entity.ToTable("Blog_Tag");
+                entity.HasKey(e => e.Id).IsClustered(clustered: false);
+                entity.HasIndex(e => e.Slug).IsUnique().IsClustered();
+            });
         }
     }
 }
