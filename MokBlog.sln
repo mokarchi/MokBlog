@@ -17,11 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.Web", "src\Core\Mok.Web
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{441909E5-4C26-49D7-953F-F838CDF2187A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mok.Blog.Tests", "test\Mok.Blog.Tests\Mok.Blog.Tests.csproj", "{2D80EE80-EA7A-456D-9FE9-CE6515258654}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.Blog.Tests", "test\Mok.Blog.Tests\Mok.Blog.Tests.csproj", "{2D80EE80-EA7A-456D-9FE9-CE6515258654}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mok.Tests", "test\Mok.Tests\Mok.Tests.csproj", "{E21A4DEE-AE60-424A-872F-2C52231CDCB9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.Tests", "test\Mok.Tests\Mok.Tests.csproj", "{E21A4DEE-AE60-424A-872F-2C52231CDCB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mok.Web.Tests", "test\Mok.Web.Tests\Mok.Web.Tests.csproj", "{3FAA22B4-C620-4419-94AF-9351369AC832}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mok.Web.Tests", "test\Mok.Web.Tests\Mok.Web.Tests.csproj", "{3FAA22B4-C620-4419-94AF-9351369AC832}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
