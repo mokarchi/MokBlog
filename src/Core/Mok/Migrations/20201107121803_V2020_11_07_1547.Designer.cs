@@ -9,8 +9,8 @@ using Mok.Data;
 namespace Mok.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201106183012_V2020_11_06_2159")]
-    partial class V2020_11_06_2159
+    [Migration("20201107121803_V2020_11_07_1547")]
+    partial class V2020_11_07_1547
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

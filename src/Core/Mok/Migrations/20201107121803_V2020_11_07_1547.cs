@@ -2,7 +2,7 @@
 
 namespace Mok.Migrations
 {
-    public partial class V2020_11_04_1232 : Migration
+    public partial class V2020_11_07_1547 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -19,6 +19,22 @@ namespace Mok.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Blog_Category", x => x.Id)
+                        .Annotation("SqlServer:Clustered", false);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Blog_Tag",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(maxLength: 256, nullable: false),
+                    Slug = table.Column<string>(maxLength: 256, nullable: false),
+                    Description = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blog_Tag", x => x.Id)
                         .Annotation("SqlServer:Clustered", false);
                 });
 
@@ -46,6 +62,13 @@ namespace Mok.Migrations
                 .Annotation("SqlServer:Clustered", true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Blog_Tag_Slug",
+                table: "Blog_Tag",
+                column: "Slug",
+                unique: true)
+                .Annotation("SqlServer:Clustered", true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Core_Meta_Type_Key",
                 table: "Core_Meta",
                 columns: new[] { "Type", "Key" },
@@ -57,6 +80,9 @@ namespace Mok.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Blog_Category");
+
+            migrationBuilder.DropTable(
+                name: "Blog_Tag");
 
             migrationBuilder.DropTable(
                 name: "Core_Meta");
