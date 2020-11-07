@@ -1,28 +1,32 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Mok.Blog.Models;
+using Mok.Blog.Services.Interfaces;
+using Newtonsoft.Json;
 
 namespace Mok.WebApp.Manage.Admin
 {
     public class TagsModel : PageModel
     {
-        public void OnGet()
+        private readonly ITagService _tagSvc;
+
+        public TagsModel(ITagService tagService)
         {
+            _tagSvc = tagService;
         }
 
         public string TagListJsonStr { get; private set; }
 
         /// <summary>
-        /// GE Tbootstrap page with json data.
+        /// GET bootstrap page with json data.
         /// </summary>
         /// <returns></returns>
         public async Task OnGetAsync()
         {
-
+            var tags = await _tagSvc.GetAllAsync();
+            TagListJsonStr = JsonConvert.SerializeObject(tags);
         }
 
         /// <summary>
