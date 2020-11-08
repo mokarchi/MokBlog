@@ -25,5 +25,12 @@ namespace Mok.Blog.Services.Interfaces
         /// <param name="tag"></param>
         /// <returns></returns>
         Task<Tag> UpdateAsync(Tag tag);
+
+        /// <summary>
+        /// Deletes a <see cref="Tag"/>.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task DeleteAsync(int id);
     }
 }

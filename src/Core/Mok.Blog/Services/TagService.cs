@@ -129,6 +129,17 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
+        /// Deletes a <see cref="Tag"/> by id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task DeleteAsync(int id)
+        {
+            await tagRepository.DeleteAsync(id);
+            await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+        }
+
+        /// <summary>
         /// Cleans tag title from any html and shortens it if exceed max allow length.
         /// </summary>
         /// <param name="title"></param>

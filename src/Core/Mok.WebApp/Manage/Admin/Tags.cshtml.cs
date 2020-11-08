@@ -73,7 +73,7 @@ namespace Mok.WebApp.Manage.Admin
         /// <returns></returns>
         public async Task OnDeleteAsync(int id)
         {
-
+            await _tagSvc.DeleteAsync(id);
         }
     }
 }
