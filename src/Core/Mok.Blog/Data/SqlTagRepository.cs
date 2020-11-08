@@ -24,14 +24,14 @@ namespace Mok.Blog.Data
         /// </summary>
         public async Task<List<Tag>> GetListAsync()
         {
-            return await (from t in _entities
-                          select new Tag
-                          {
-                              Id = t.Id,
-                              Title = t.Title,
-                              Slug = t.Slug,
-                              Description = t.Description
-                          }).ToListAsync();
+            return await _entities.Select(
+                t => new Tag
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Slug = t.Slug,
+                    Description = t.Description
+                }).ToListAsync();
         }
     }
 }
