@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
+using Mok.Exceptions;
 using Newtonsoft.Json;
 
 namespace Mok.WebApp.Manage.Admin
@@ -36,7 +37,15 @@ namespace Mok.WebApp.Manage.Admin
         /// <returns></returns>
         public async Task<IActionResult> OnPostAsync([FromBody] Tag tag)
         {
-            throw new Exception();
+            try
+            {
+                var tagNew = await _tagSvc.CreateAsync(new Tag { Title = tag.Title, Description = tag.Description });
+                return new JsonResult(tagNew);
+            }
+            catch (MokException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>

@@ -11,5 +11,12 @@ namespace Mok.Blog.Services.Interfaces
         /// </summary>
         /// <returns></returns>
         Task<List<Tag>> GetAllAsync();
+
+        /// <summary>
+        /// Creates a new <see cref="Tag"/>.
+        /// </summary>
+        /// <param name="tag"></param>
+        /// <returns></returns>
+        Task<Tag> CreateAsync(Tag tag);
     }
 }
