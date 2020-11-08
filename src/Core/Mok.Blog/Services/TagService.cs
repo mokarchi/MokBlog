@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace Mok.Blog.Services
 {
+    /// <summary>
+    /// Unit tests for <see cref="TagService"/>.
+    /// </summary>
     public class TagService : ITagService
     {
         private readonly ITagRepository tagRepository;
@@ -137,6 +140,44 @@ namespace Mok.Blog.Services
         {
             await tagRepository.DeleteAsync(id);
             await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+        }
+
+        /// <summary>
+        /// Returns tag by id, throws <see cref="MokException"/> if tag with id is not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<Tag> GetAsync(int id)
+        {
+            var tags = await GetAllAsync();
+            var tag = tags.SingleOrDefault(c => c.Id == id);
+            if (tag == null)
+            {
+                throw new MokException(EExceptionType.ResourceNotFound,
+                    $"Tag with id {id} is not found.");
+            }
+
+            return tag;
+        }
+
+        /// <summary>
+        /// Returns tag by slug, throws <see cref="MokException"/> if tag with slug is not found.
+        /// </summary>
+        /// <param name="slug">Tag slug.</param>
+        /// <returns></returns>
+        public async Task<Tag> GetBySlugAsync(string slug)
+        {
+            if (slug.IsNullOrEmpty())
+                throw new MokException(EExceptionType.ResourceNotFound, "Tag does not exist.");
+
+            var tags = await GetAllAsync();
+            var tag = tags.SingleOrDefault(c => c.Slug.Equals(slug, StringComparison.CurrentCultureIgnoreCase));
+            if (tag == null)
+            {
+                throw new MokException(EExceptionType.ResourceNotFound, $"Tag '{slug}' does not exist.");
+            }
+
+            return tag;
         }
 
         /// <summary>

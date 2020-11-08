@@ -32,5 +32,19 @@ namespace Mok.Blog.Services.Interfaces
         /// <param name="id"></param>
         /// <returns></returns>
         Task DeleteAsync(int id);
+
+        /// <summary>
+        /// Returns tag by id, throws <see cref="FanException"/> if tag with id is not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task<Tag> GetAsync(int id);
+
+        /// <summary>
+        /// Returns tag by slug, throws <see cref="FanException"/> if tag with slug is not found.
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        Task<Tag> GetBySlugAsync(string slug);
     }
 }
