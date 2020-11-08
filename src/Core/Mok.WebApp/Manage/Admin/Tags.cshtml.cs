@@ -55,7 +55,15 @@ namespace Mok.WebApp.Manage.Admin
         /// <returns></returns>
         public async Task<IActionResult> OnPostUpdateAsync([FromBody] Tag tag)
         {
-            throw new Exception();
+            try
+            {
+                var tagUpdated = await _tagSvc.UpdateAsync(tag);
+                return new JsonResult(tagUpdated);
+            }
+            catch (MokException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>

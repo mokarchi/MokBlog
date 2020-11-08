@@ -87,6 +87,48 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
+        /// Updates an existing <see cref="Tag"/>.
+        /// </summary>
+        /// <param name="tag">The tag with data to be updated.</param>
+        /// <exception cref="MokException">If tag is invalid or title exists already.</exception>
+        /// <returns>Updated tag.</returns>
+        public async Task<Tag> UpdateAsync(Tag tag)
+        {
+            if (tag == null || tag.Id <= 0 || tag.Title.IsNullOrEmpty())
+            {
+                throw new MokException($"Invalid tag to update.");
+            }
+
+            // prep title
+            tag.Title = PrepareTitle(tag.Title);
+
+            // make sure it is unique
+            var allTags = await GetAllAsync();
+            allTags.RemoveAll(t => t.Id == tag.Id); // remove self
+            if (allTags.Any(t => t.Title.Equals(tag.Title, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                throw new MokException($"'{tag.Title}' already exists.");
+            }
+
+            // prep slug, description and count
+            var entity = await tagRepository.GetAsync(tag.Id);
+            entity.Title = tag.Title; // assign new title
+            entity.Slug = BlogUtil.SlugifyTaxonomy(tag.Title, SLUG_MAXLEN, allTags.Select(c => c.Slug)); // slug is based on title
+            entity.Description = Util.CleanHtml(tag.Description);
+            entity.Count = tag.Count;
+
+            // update 
+            await tagRepository.UpdateAsync(entity);
+
+            // remove cache
+            await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+
+            // return entity
+            logger.LogDebug("Updated {@Tag}", entity);
+            return entity;
+        }
+
+        /// <summary>
         /// Cleans tag title from any html and shortens it if exceed max allow length.
         /// </summary>
         /// <param name="title"></param>

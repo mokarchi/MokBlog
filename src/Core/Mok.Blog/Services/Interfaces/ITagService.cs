@@ -18,5 +18,12 @@ namespace Mok.Blog.Services.Interfaces
         /// <param name="tag"></param>
         /// <returns></returns>
         Task<Tag> CreateAsync(Tag tag);
+
+        /// <summary>
+        /// Updates an existing <see cref="Tag"/>.
+        /// </summary>
+        /// <param name="tag"></param>
+        /// <returns></returns>
+        Task<Tag> UpdateAsync(Tag tag);
     }
 }
