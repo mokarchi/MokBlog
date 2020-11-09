@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Mok.Migrations
 {
-    public partial class V2020_11_07_1547 : Migration
+    public partial class V2020_11_09_1001 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -54,12 +55,65 @@ namespace Mok.Migrations
                         .Annotation("SqlServer:Clustered", false);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Blog_Post",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Body = table.Column<string>(nullable: true),
+                    BodyMark = table.Column<string>(nullable: true),
+                    CategoryId = table.Column<int>(nullable: true),
+                    CommentCount = table.Column<int>(nullable: false),
+                    CommentStatus = table.Column<byte>(nullable: false),
+                    CreatedOn = table.Column<DateTimeOffset>(nullable: false),
+                    Excerpt = table.Column<string>(nullable: true),
+                    ParentId = table.Column<int>(nullable: true),
+                    RootId = table.Column<int>(nullable: true),
+                    Slug = table.Column<string>(maxLength: 256, nullable: true),
+                    Status = table.Column<byte>(nullable: false),
+                    Title = table.Column<string>(maxLength: 256, nullable: true),
+                    Type = table.Column<byte>(nullable: false),
+                    UpdatedOn = table.Column<DateTimeOffset>(nullable: true),
+                    ViewCount = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blog_Post", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Blog_Post_Blog_Category_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Blog_Category",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Blog_Category_Slug",
                 table: "Blog_Category",
                 column: "Slug",
                 unique: true)
                 .Annotation("SqlServer:Clustered", true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blog_Post_CategoryId",
+                table: "Blog_Post",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blog_Post_ParentId",
+                table: "Blog_Post",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blog_Post_Slug",
+                table: "Blog_Post",
+                column: "Slug");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blog_Post_Type_Status_CreatedOn_Id",
+                table: "Blog_Post",
+                columns: new[] { "Type", "Status", "CreatedOn", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blog_Tag_Slug",
@@ -79,13 +133,16 @@ namespace Mok.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Blog_Category");
+                name: "Blog_Post");
 
             migrationBuilder.DropTable(
                 name: "Blog_Tag");
 
             migrationBuilder.DropTable(
                 name: "Core_Meta");
+
+            migrationBuilder.DropTable(
+                name: "Blog_Category");
         }
     }
 }

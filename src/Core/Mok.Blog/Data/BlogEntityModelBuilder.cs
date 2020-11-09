@@ -8,6 +8,14 @@ namespace Mok.Blog.Data
     {
         public void CreateModel(ModelBuilder builder)
         {
+            builder.Entity<Post>(entity =>
+            {
+                entity.ToTable("Blog_Post");
+                entity.HasIndex(e => e.Slug);
+                entity.HasIndex(e => new { e.Type, e.Status, e.CreatedOn, e.Id });
+                entity.HasIndex(e => e.ParentId);
+            });
+
             builder.Entity<Category>(entity =>
             {
                 entity.ToTable("Blog_Category");
