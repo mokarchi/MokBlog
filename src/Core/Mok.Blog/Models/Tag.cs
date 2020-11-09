@@ -1,4 +1,5 @@
 ﻿using MokCore.Data;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -36,5 +37,7 @@ namespace Mok.Blog.Models
         /// </summary>
         [NotMapped]
         public int Count { get; set; }
+
+        public virtual ICollection<PostTag> PostTags { get; set; }
     }
 }

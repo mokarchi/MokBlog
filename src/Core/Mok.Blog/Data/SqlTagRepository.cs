@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Mok.Blog.Enums;
 
 namespace Mok.Blog.Data
 {
@@ -30,8 +31,12 @@ namespace Mok.Blog.Data
                     Id = t.Id,
                     Title = t.Title,
                     Slug = t.Slug,
-                    Description = t.Description
-                }).ToListAsync();
+                    Description = t.Description,
+                    Count = (from p in _db.Set<Post>()
+                             from pt in p.PostTags
+                             where pt.TagId == t.Id && p.Status == EPostStatus.Published
+                             select pt).Count(),
+                }).OrderByDescending(t => t.Count).ThenBy(t => t.Title).ToListAsync();
         }
     }
 }

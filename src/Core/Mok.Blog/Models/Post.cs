@@ -2,11 +2,17 @@
 using System;
 using Mok.Blog.Enums;
 using System.ComponentModel.DataAnnotations;
+using Mok.Membership;
+using System.Collections.Generic;
 
 namespace Mok.Blog.Models
 {
     public class Post : Entity
     {
+        public Post()
+        {
+            PostTags = new HashSet<PostTag>();
+        }
         /// <summary>
         /// Post body in html.
         /// </summary>
@@ -114,6 +120,18 @@ namespace Mok.Blog.Models
         /// </remarks>
         public DateTimeOffset? UpdatedOn { get; set; }
 
+        /// <summary>
+        /// The author.
+        /// </summary>
+        public User User { get; set; }
+
+        /// <summary>
+        /// The author id.
+        /// </summary>
+        public int UserId { get; set; }
+
         public int ViewCount { get; set; }
+
+        public virtual ICollection<PostTag> PostTags { get; set; }
     }
 }

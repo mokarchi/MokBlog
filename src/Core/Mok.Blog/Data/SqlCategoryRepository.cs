@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Mok.Blog.Enums;
 using Mok.Blog.Models;
 using Mok.Data;
 using System.Collections.Generic;
@@ -33,7 +34,8 @@ namespace Mok.Blog.Data
                     Id = c.Id,
                     Title = c.Title,
                     Slug = c.Slug,
-                    Description = c.Description
+                    Description = c.Description,
+                    Count = _db.Set<Post>().Where(p => p.CategoryId == c.Id && p.Status == EPostStatus.Published).Count(),
                 }).OrderBy(c => c.Title).ToListAsync();
         }
 

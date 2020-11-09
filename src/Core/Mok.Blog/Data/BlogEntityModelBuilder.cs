@@ -14,6 +14,7 @@ namespace Mok.Blog.Data
                 entity.HasIndex(e => e.Slug);
                 entity.HasIndex(e => new { e.Type, e.Status, e.CreatedOn, e.Id });
                 entity.HasIndex(e => e.ParentId);
+                entity.HasIndex(e => e.UserId);
             });
 
             builder.Entity<Category>(entity =>
@@ -28,6 +29,12 @@ namespace Mok.Blog.Data
                 entity.ToTable("Blog_Tag");
                 entity.HasKey(e => e.Id).IsClustered(clustered: false);
                 entity.HasIndex(e => e.Slug).IsUnique().IsClustered();
+            });
+
+            builder.Entity<PostTag>(entity =>
+            {
+                entity.ToTable("Blog_PostTag");
+                entity.HasKey(e => new { e.PostId, e.TagId });
             });
         }
     }
