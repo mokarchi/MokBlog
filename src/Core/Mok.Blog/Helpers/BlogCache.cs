@@ -11,6 +11,7 @@ namespace Mok.Blog.Helpers
     {
         public const string KEY_ALL_CATS = "BlogCategories";
         public const string KEY_ALL_TAGS = "BlogTags";
+        public const string KEY_POSTS_INDEX = "BlogPostsIndex";
 
         /// <summary>
         /// 10 minutes.
@@ -21,5 +22,10 @@ namespace Mok.Blog.Helpers
         /// 10 minutes.
         /// </summary>
         public static readonly TimeSpan Time_AllTags = new TimeSpan(0, 10, 0);
+
+        /// <summary>
+        /// 10 minutes.
+        /// </summary>
+        public static readonly TimeSpan Time_Posts_Index = new TimeSpan(0, 10, 0);
     }
 }
