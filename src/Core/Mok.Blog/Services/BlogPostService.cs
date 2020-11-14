@@ -19,13 +19,16 @@ namespace Mok.Blog.Services
         private readonly IDistributedCache cache;
         private readonly ILogger<BlogPostService> logger;
         private readonly IMapper mapper;
+        private readonly IImageService imageService;
 
         public BlogPostService(IPostRepository postRepository, 
                                IDistributedCache cache,
                                ILogger<BlogPostService> logger,
+                               IImageService imageService,
                                IMapper mapper)
         {
             this.postRepository = postRepository;
+            this.imageService = imageService;
             this.cache = cache;
             this.logger = logger;
             this.mapper = mapper;
@@ -119,6 +122,21 @@ namespace Mok.Blog.Services
             blogPost.ViewCount = post.ViewCount;
 
             logger.LogDebug("Show {@BlogPost}", blogPost);
+            return blogPost;
+        }
+
+        /// <summary>
+        /// Pre render processing of a blog post. TODO consider refactor.
+        /// </summary>
+        /// <param name="blogPost"></param>
+        /// <returns></returns>
+        private async Task<BlogPost> PreRenderAsync(BlogPost blogPost)
+        {
+            if (blogPost == null) return blogPost;
+
+            blogPost.Body = OembedParser.Parse(blogPost.Body);
+            blogPost.Body = await imageService.ProcessResponsiveImageAsync(blogPost.Body);
+
             return blogPost;
         }
     }
