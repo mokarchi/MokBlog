@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Mok.Medias;
 using Mok.Membership;
 using MokCore.Data;
 
@@ -24,6 +25,11 @@ namespace Mok.Data
                 entity.ToTable("Core_Meta");
                 entity.HasKey(e => e.Id).IsClustered(clustered: false);
                 entity.HasIndex(e => new { e.Type, e.Key }).IsUnique().IsClustered();
+            });
+            builder.Entity<Media>(entity =>
+            {
+                entity.ToTable("Core_Media");
+                entity.HasIndex(e => new { e.MediaType, e.UploadedOn });
             });
         }
     }
