@@ -1,11 +1,15 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Mok.Blog.Data;
 using Mok.Blog.Enums;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
+using System.Net;
 using System.Threading.Tasks;
+using Mok.Helpers;
+using System;
 
 namespace Mok.Blog.Services
 {
@@ -14,15 +18,23 @@ namespace Mok.Blog.Services
         private readonly IPostRepository postRepository;
         private readonly IDistributedCache cache;
         private readonly ILogger<BlogPostService> logger;
+        private readonly IMapper mapper;
 
         public BlogPostService(IPostRepository postRepository, 
                                IDistributedCache cache,
-                               ILogger<BlogPostService> logger)
+                               ILogger<BlogPostService> logger,
+                               IMapper mapper)
         {
             this.postRepository = postRepository;
             this.cache = cache;
             this.logger = logger;
+            this.mapper = mapper;
         }
+
+        /// <summary>
+        /// How many words to extract into excerpt from body. Default 55.
+        /// </summary>
+        public const int EXCERPT_WORD_LIMIT = 55;
 
         /// <summary>
         /// Returns a list of blog posts.
@@ -73,6 +85,41 @@ namespace Mok.Blog.Services
             }
 
             return blogPostList;
+        }
+
+        /// <summary>
+        /// Gets a <see cref="BlogPost"/> for display to client from a <see cref="Post"/>.
+        /// </summary>
+        /// <param name="post"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// It readies <see cref="Post.CreatedOnDisplay"/>, Title, Excerpt, CategoryTitle, Tags and Body with shortcodes.
+        /// </remarks>
+        private BlogPost ConvertToBlogPost(Post post)
+        {
+            var blogPost = mapper.Map<Post, BlogPost>(post);
+
+            // Title
+            blogPost.Title = WebUtility.HtmlDecode(blogPost.Title); // since OLW encodes it, we decode it here
+
+            // Excerpt
+            blogPost.Excerpt = post.Excerpt.IsNullOrEmpty() ? Util.GetExcerpt(post.Body, EXCERPT_WORD_LIMIT) : post.Excerpt;
+
+            // CategoryTitle
+            blogPost.CategoryTitle = post.Category?.Title;
+
+            // Tags and TagTitles
+            foreach (var postTag in post.PostTags)
+            {
+                blogPost.Tags.Add(postTag.Tag);
+                blogPost.TagTitles.Add(postTag.Tag.Title);
+            }
+
+            // ViewCount
+            blogPost.ViewCount = post.ViewCount;
+
+            logger.LogDebug("Show {@BlogPost}", blogPost);
+            return blogPost;
         }
     }
 }
