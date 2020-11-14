@@ -1,7 +1,9 @@
 ﻿using HtmlAgilityPack;
+using Humanizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace Mok.Helpers
@@ -182,6 +184,39 @@ namespace Mok.Helpers
             }
 
             return slug;
+        }
+
+        /// <summary>
+        /// Returns excerpt give body of a post. Returns empty string if body is null or operation
+        /// fails. The returned string 
+        /// </summary>
+        /// <param name="body"></param>
+        /// <param name="wordsLimit"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// - I noticed flipboard on the web uses cleaned up exerpts
+        /// - Stripping all html tags with Html Agility Pack http://stackoverflow.com/a/3140991/32240
+        /// </remarks>
+        public static string GetExcerpt(string body, int wordsLimit)
+        {
+            if (string.IsNullOrEmpty(body) || wordsLimit <= 0) return "";
+
+            try
+            {
+                // decode body
+                body = WebUtility.HtmlDecode(body);
+
+                HtmlDocument document = new HtmlDocument();
+                document.LoadHtml(body);
+                body = document.DocumentNode.InnerText?.Trim(); // should be clean text by now
+                if (body.IsNullOrEmpty()) return "";
+
+                return body.Truncate(wordsLimit, Truncator.FixedNumberOfWords);
+            }
+            catch (Exception)
+            {
+                return body;
+            }
         }
 
     }
