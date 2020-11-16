@@ -13,11 +13,14 @@ namespace Mok.Blog.Services
 {
     public class ImageService : IImageService
     {
+        private readonly IMediaService _mediaSvc;
         private readonly AppSettings _appSettings;
         private readonly IStorageProvider _storageProvider;
-        public ImageService(IStorageProvider storageProvider,
+        public ImageService(IMediaService mediaSvc,
+                            IStorageProvider storageProvider,
                             IOptionsSnapshot<AppSettings> appSettings)
         {
+            _mediaSvc = mediaSvc;
             _storageProvider = storageProvider;
             _appSettings = appSettings.Value;
         }
