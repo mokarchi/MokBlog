@@ -11,6 +11,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Mok.Settings;
 using Mok.Blog.Models;
+using Mok.Blog.Helpers;
+using MediatR;
+using AutoMapper;
 
 namespace Mok.WebApp
 {
@@ -32,6 +35,13 @@ namespace Mok.WebApp
 
             // Caching
             services.AddDistributedMemoryCache();
+
+            // AutoMapper
+            services.AddAutoMapper(typeof(BlogPost));
+            services.AddSingleton(BlogUtil.Mapper);
+
+            // Mediatr
+            services.AddMediatR(typeof(BlogPost));
 
             // Scrutor 
             services.Scan(scan => scan
