@@ -1,7 +1,9 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Options;
 using Mok.Blog.Enums;
 using Mok.Blog.Services.Interfaces;
 using Mok.Medias;
+using Mok.Settings;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,9 +13,13 @@ namespace Mok.Blog.Services
 {
     public class ImageService : IImageService
     {
-        public ImageService()
+        private readonly AppSettings _appSettings;
+        private readonly IStorageProvider _storageProvider;
+        public ImageService(IStorageProvider storageProvider,
+                            IOptionsSnapshot<AppSettings> appSettings)
         {
-
+            _storageProvider = storageProvider;
+            _appSettings = appSettings.Value;
         }
         /// <summary>
         /// "Blog"
