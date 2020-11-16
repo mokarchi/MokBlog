@@ -1,4 +1,6 @@
-﻿using Mok.Helpers;
+﻿using AutoMapper;
+using Mok.Blog.Models;
+using Mok.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,6 +31,24 @@ namespace Mok.Blog.Helpers
             slug = Util.UniquefySlug(slug, existingSlugs);
 
             return slug;
+        }
+
+        /// <summary>
+        /// Returns automapper mapping.
+        /// </summary>
+        /// <remarks>
+        /// https://github.com/AutoMapper/AutoMapper/issues/1441
+        /// </remarks>
+        public static IMapper Mapper
+        {
+            get
+            {
+                return new MapperConfiguration(cfg =>
+                {
+                    cfg.CreateMap<Post, BlogPost>();
+                    cfg.CreateMap<BlogPost, Post>();
+                }).CreateMapper();
+            }
         }
     }
 }
