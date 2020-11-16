@@ -57,6 +57,9 @@ namespace Mok.WebApp
                     options.RootDirectory = "/Manage";
                 });
 
+            // HttpContext
+            services.AddHttpContextAccessor();
+
             // JsonConvert
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {

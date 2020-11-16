@@ -10,8 +10,8 @@ using Mok.Data;
 namespace Mok.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201109082250_V2020_11_09_1152")]
-    partial class V2020_11_09_1152
+    [Migration("20201116091543_V2020_11_16_1244")]
+    partial class V2020_11_16_1244
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -297,6 +297,72 @@ namespace Mok.Migrations
                     b.ToTable("Core_Meta");
                 });
 
+            modelBuilder.Entity("Mok.Medias.Media", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Alt")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AppType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Caption")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(256)")
+                        .HasMaxLength(256);
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(256)")
+                        .HasMaxLength(256);
+
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<long>("Length")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte>("MediaType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("ResizeCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(256)")
+                        .HasMaxLength(256);
+
+                    b.Property<byte>("UploadedFrom")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTimeOffset>("UploadedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MediaType", "UploadedOn");
+
+                    b.ToTable("Core_Media");
+                });
+
             modelBuilder.Entity("Mok.Membership.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -481,6 +547,15 @@ namespace Mok.Migrations
                     b.HasOne("Mok.Blog.Models.Tag", "Tag")
                         .WithMany("PostTags")
                         .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Mok.Medias.Media", b =>
+                {
+                    b.HasOne("Mok.Membership.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

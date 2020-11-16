@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Mok.Migrations
 {
-    public partial class V2020_11_09_1152 : Migration
+    public partial class V2020_11_16_1244 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -155,6 +155,39 @@ namespace Mok.Migrations
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Blog_Post_Core_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Core_User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Core_Media",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AppType = table.Column<int>(nullable: false),
+                    Description = table.Column<string>(nullable: true),
+                    FileName = table.Column<string>(maxLength: 256, nullable: false),
+                    Length = table.Column<long>(nullable: false),
+                    Title = table.Column<string>(maxLength: 256, nullable: true),
+                    MediaType = table.Column<byte>(nullable: false),
+                    UploadedOn = table.Column<DateTimeOffset>(nullable: false),
+                    UploadedFrom = table.Column<byte>(nullable: false),
+                    UserId = table.Column<int>(nullable: false),
+                    Caption = table.Column<string>(nullable: true),
+                    ContentType = table.Column<string>(maxLength: 256, nullable: false),
+                    Width = table.Column<int>(nullable: false),
+                    Height = table.Column<int>(nullable: false),
+                    Alt = table.Column<string>(nullable: true),
+                    ResizeCount = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Core_Media", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Core_Media_Core_User_UserId",
                         column: x => x.UserId,
                         principalTable: "Core_User",
                         principalColumn: "Id",
@@ -315,6 +348,16 @@ namespace Mok.Migrations
                 .Annotation("SqlServer:Clustered", true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Core_Media_UserId",
+                table: "Core_Media",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Core_Media_MediaType_UploadedOn",
+                table: "Core_Media",
+                columns: new[] { "MediaType", "UploadedOn" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Core_Meta_Type_Key",
                 table: "Core_Meta",
                 columns: new[] { "Type", "Key" },
@@ -365,6 +408,9 @@ namespace Mok.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Blog_PostTag");
+
+            migrationBuilder.DropTable(
+                name: "Core_Media");
 
             migrationBuilder.DropTable(
                 name: "Core_Meta");
