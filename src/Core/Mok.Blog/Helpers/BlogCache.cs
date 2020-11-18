@@ -12,6 +12,10 @@ namespace Mok.Blog.Helpers
         public const string KEY_ALL_CATS = "BlogCategories";
         public const string KEY_ALL_TAGS = "BlogTags";
         public const string KEY_POSTS_INDEX = "BlogPostsIndex";
+        public const string KEY_POSTS_RECENT = "BlogPostsRecent";
+        public const string KEY_ALL_ARCHIVES = "BlogArchives";
+        public const string KEY_POST_COUNT = "BlogPostCount";
+        public const string KEY_POST = "BlogPost_{0}_{1}_{2}_{3}";
 
         /// <summary>
         /// 10 minutes.

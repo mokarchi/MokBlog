@@ -10,6 +10,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Mok.Helpers;
 using System;
+using Mok.Exceptions;
 
 namespace Mok.Blog.Services
 {
@@ -67,6 +68,65 @@ namespace Mok.Blog.Services
             return await QueryPostsAsync(query);
         }
 
+        /// <summary>
+        /// Returns a list of blog drafts.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<BlogPostList> GetListForDraftsAsync()
+        {
+            PostListQuery query = new PostListQuery(EPostListQueryType.BlogDrafts);
+
+            return await QueryPostsAsync(query);
+        }
+
+        /// <summary>
+        /// Deletes a blog post and invalidates cache for posts on index page.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task DeleteAsync(int id)
+        {
+            var post = await GetAsync(id);
+            await postRepository.DeleteAsync(id);
+            await RemoveBlogCacheAsync();
+            await RemoveSinglePostCacheAsync(post);
+        }
+
+        /// <summary>
+        /// Returns a <see cref="BlogPost"/> by id with its <see cref="Category"/> and <see cref="Tag"/>
+        /// and throws <see cref="FanException"/> if not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="FanException">if post is not found.</exception>
+        /// <remarks>
+        /// This is used when you want to get a post from db.
+        /// </remarks>
+        public async Task<BlogPost> GetAsync(int id)
+        {
+            var post = await QueryPostAsync(id);
+            return ConvertToBlogPost(post);
+        }
+
+        /// <summary>
+        /// Returns a <see cref="Post"/> from data source, throws <see cref="FanException"/> if not found.
+        /// </summary>
+        /// <param name="id">A blog post id.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// Returned post is tracked.
+        /// </remarks>
+        private async Task<Post> QueryPostAsync(int id)
+        {
+            var post = await postRepository.GetAsync(id, EPostType.BlogPost);
+
+            if (post == null)
+            {
+                throw new MokException($"Blog post with id {id} is not found.");
+            }
+
+            return post;
+        }
         /// <summary>
         /// Returns a <see cref="BlogPostList"/> based on query from data source.
         /// </summary>
@@ -138,6 +198,25 @@ namespace Mok.Blog.Services
             blogPost.Body = await imageService.ProcessResponsiveImageAsync(blogPost.Body);
 
             return blogPost;
+        }
+
+        /// <summary>
+        /// Invalidates cache for blog post service.
+        /// </summary>
+        public async Task RemoveBlogCacheAsync()
+        {
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_RECENT);
+            await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
+            await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+            await cache.RemoveAsync(BlogCache.KEY_ALL_ARCHIVES);
+            await cache.RemoveAsync(BlogCache.KEY_POST_COUNT);
+        }
+
+        private async Task RemoveSinglePostCacheAsync(Post post)
+        {
+            var cacheKey = string.Format(BlogCache.KEY_POST, post.Slug, post.CreatedOn.Year, post.CreatedOn.Month, post.CreatedOn.Day);
+            await cache.RemoveAsync(cacheKey);
         }
     }
 }

@@ -4,12 +4,24 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Mok.Blog.Services.Interfaces;
+using Mok.Settings;
 using Newtonsoft.Json;
 
 namespace Mok.WebApp.Manage.Admin
 {
     public class PostsModel : PageModel
     {
+        private readonly IBlogPostService blogPostService;
+        private readonly ISettingService settingService;
+
+        public PostsModel(IBlogPostService blogPostService,
+                          ISettingService settingService)
+        {
+            this.blogPostService = blogPostService;
+            this.settingService = settingService;
+        }
+
         /// <summary>
         /// For post data table footer pagination.
         /// </summary>
@@ -37,7 +49,8 @@ namespace Mok.WebApp.Manage.Admin
         /// </summary>
         public async Task OnGetAsync(string status = "published")
         {
-
+            Data = await GetPostListVMAsync(status, pageNumber: 1, pageSize: 25);
+            ActiveStatus = status;
         }
 
         /// <summary>
@@ -48,7 +61,8 @@ namespace Mok.WebApp.Manage.Admin
         /// </remarks>
         public async Task<JsonResult> OnGetPostsAsync(string status, int pageNumber, int pageSize)
         {
-            throw new Exception();
+            var list = await GetPostListVMAsync(status, pageNumber, pageSize);
+            return new JsonResult(list);
         }
 
         /// <summary>
@@ -61,7 +75,9 @@ namespace Mok.WebApp.Manage.Admin
         /// <returns></returns>
         public async Task<JsonResult> OnDeleteAsync(int postId, string status, int pageNumber, int pageSize)
         {
-            throw new Exception();
+            await blogPostService.DeleteAsync(postId);
+            var list = await GetPostListVMAsync(status, pageNumber, pageSize);
+            return new JsonResult(list);
         }
 
         /// <summary>
@@ -76,7 +92,26 @@ namespace Mok.WebApp.Manage.Admin
         /// </remarks>
         private async Task<PostListVM> GetPostListVMAsync(string status, int pageNumber, int pageSize)
         {
-            throw new Exception();
+            var postList = status.Equals("published", StringComparison.InvariantCultureIgnoreCase) ?
+                await blogPostService.GetListAsync(pageNumber, pageSize, cacheable: false) :
+                await blogPostService.GetListForDraftsAsync(); // TODO drafts need pagination too
+
+            var postVms = from p in postList.Posts
+                          select new PostVM
+                          {
+                              Id = p.Id,
+                              Title = p.Title,
+                              Author = p.User.DisplayName,
+                              Category = p.CategoryTitle,
+                              ViewCount = p.ViewCount,
+                          };
+
+            // prep vm
+            return new PostListVM
+            {
+                Posts = postVms,
+                TotalPosts = postList.TotalPostCount,
+            };
         }
 
         public class PostListVM

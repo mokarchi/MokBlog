@@ -85,5 +85,18 @@ namespace Mok.Blog.Data
 
             return (posts, totalCount: postCount);
         }
+
+        /// <summary>
+        /// Returns a <see cref="Post"/> by id. If it is a BlogPost it'll return together with its 
+        /// <see cref="Category"/> and <see cref="Tag"/>. Returns null if it's not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="type">If it's BlogPost it'll return category and tags with it.</param>
+        public async Task<Post> GetAsync(int id, EPostType type)
+        {
+            return (type == EPostType.BlogPost) ?
+                await _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag).SingleOrDefaultAsync(p => p.Id == id) :
+                await _entities.Include(p => p.User).SingleOrDefaultAsync(p => p.Id == id);
+        }
     }
 }
