@@ -1,9 +1,11 @@
 ﻿using HtmlAgilityPack;
+using Humanizer;
 using Microsoft.Extensions.Options;
 using Mok.Blog.Enums;
 using Mok.Blog.Services.Interfaces;
 using Mok.Medias;
 using Mok.Settings;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,6 +48,35 @@ namespace Mok.Blog.Services
         /// Medium large image (ml) size 1800 pixel (1.5x).
         /// </summary>
         public const int MEDIUM_LARGE_IMG_SIZE = 1800;
+
+        /// <summary>
+        /// Max image file size is 5MB.
+        /// </summary>
+        public static readonly long Max_File_Size = (long)(5).Megabytes().Bytes;
+
+        /// <summary>
+        /// validFileTypes: ['.jpg', '.jpeg', '.png', '.gif']
+        /// </summary>
+        public static string ValidFileTypesJson = JsonConvert.SerializeObject(Accepted_Image_Types);
+
+        /// <summary>
+        /// Blog accepted image types: .jpg .jpeg .png .gif
+        /// </summary>
+        /// <remarks>
+        /// Got the idea from WP https://en.support.wordpress.com/images/
+        /// For accepted file types https://en.support.wordpress.com/accepted-filetypes/
+        /// </remarks>
+        public static readonly string[] Accepted_Image_Types = { ".jpg", ".jpeg", ".gif", ".png" };
+
+        /// <summary>
+        /// Error message for valid file types.
+        /// </summary>
+        public const string ERR_MSG_FILETYPE = "Only .jpg, .jpeg, .png and .gif are supported.";
+
+        /// <summary>
+        /// Error message for valid file size.
+        /// </summary>
+        public const string ERR_MSG_FILESIZE = "File cannot be larger than 5MB.";
 
         /// <summary>
         /// Given a blog post's body html, it replaces all img tags with one that is updated for Repsonsive Images.
