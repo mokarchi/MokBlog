@@ -23,5 +23,13 @@ namespace Mok.Blog.Services.Interfaces
         /// <param name="id"></param>
         /// <returns></returns>
         Task DeleteAsync(int id);
+
+        /// <summary>
+        /// Returns a <see cref="BlogPost"/> by id, throws <see cref="FanException"/> if not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="FanException">if post is not found.</exception>
+        Task<BlogPost> GetAsync(int id);
     }
 }
