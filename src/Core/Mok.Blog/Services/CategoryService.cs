@@ -55,8 +55,6 @@ namespace Mok.Blog.Services
         /// <summary>
         /// Returns category by id, throws <see cref="MokException"/> if category with id is not found.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         public async Task<Category> GetAsync(int id)
         {
             var cats = await GetAllAsync();
@@ -71,11 +69,26 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
+        /// Returns category by slug, throws <see cref="MokException"/> if category with slug is null or not found.
+        /// </summary>
+        public async Task<Category> GetAsync(string slug)
+        {
+            if (slug.IsNullOrEmpty())
+                throw new MokException(EExceptionType.ResourceNotFound, "Category does not exist.");
+
+            var cats = await GetAllAsync();
+            var cat = cats.SingleOrDefault(c => c.Slug.Equals(slug, StringComparison.CurrentCultureIgnoreCase));
+            if (cat == null)
+            {
+                throw new MokException(EExceptionType.ResourceNotFound, $"Category '{slug}' does not exist.");
+            }
+
+            return cat;
+        }
+
+        /// <summary>
         /// Creates a new <see cref="Category"/>.
         /// </summary>
-        /// <param name="category">The category with data to be created.</param>
-        /// <exception cref="MokException">If title is empty or exists already.</exception>
-        /// <returns>Created category.</returns>
         public async Task<Category> CreateAsync(string title, string description = null)
         {
             if (title.IsNullOrEmpty())
@@ -105,11 +118,17 @@ namespace Mok.Blog.Services
 
             // remove cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
 
             logger.LogDebug("Created {@Category}", category);
             return category;
         }
 
+        /// <summary>
+        /// Deletes a <see cref="Category"/> and reassigns posts to a default category, and 
+        /// invalidates caceh for all categories.  Throws <see cref="MokException"/> if the
+        /// category being deleted is the default category.
+        /// </summary>
         public async Task DeleteAsync(int id)
         {
             var blogSettings = await settingService.GetSettingsAsync<BlogSettings>();
@@ -126,8 +145,12 @@ namespace Mok.Blog.Services
 
             // invalidate cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
         }
 
+        /// <summary>
+        /// Updates an existing <see cref="Category"/>.
+        /// </summary>
         public async Task<Category> UpdateAsync(Category category)
         {
             if(category == null || category.Id <=0 || category.Title.IsNullOrEmpty())
@@ -155,6 +178,7 @@ namespace Mok.Blog.Services
 
             // remove cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
 
             // return entity
             logger.LogDebug("Updated {@Category}", entity);
@@ -164,8 +188,6 @@ namespace Mok.Blog.Services
         /// <summary>
         /// Sets the id to default category.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         public async Task SetDefaultAsync(int id)
         {
             await settingService.UpsertSettingsAsync(new BlogSettings
@@ -177,8 +199,6 @@ namespace Mok.Blog.Services
         /// <summary>
         /// Cleans category title from any html and shortens it if exceed max allow length.
         /// </summary>
-        /// <param name="title"></param>
-        /// <returns></returns>
         private string PrepareTitle(string title)
         {
             title = Util.CleanHtml(title);
