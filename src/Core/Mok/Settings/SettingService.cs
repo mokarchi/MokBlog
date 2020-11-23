@@ -44,8 +44,6 @@ namespace Mok.Settings
         /// <summary>
         /// Returns a type of <see cref="ISettings"/>.
         /// </summary>
-        /// <typeparam name="T">The derived <see cref="ISettings"/> type.</typeparam>
-        /// <returns></returns>
         public async Task<T> GetSettingsAsync<T>() where T : class, ISettings, new()
         {
             string cacheKey = typeof(T).Name;
@@ -78,9 +76,6 @@ namespace Mok.Settings
         /// <summary>
         /// Creates or updates a Settings, if a particular setting exists then updates it, else inserts it.
         /// </summary>
-        /// <typeparam name="T">The derived <see cref="ISettings"/> type.</typeparam>
-        /// <param name="settings"></param>
-        /// <returns></returns>
         public async Task<T> UpsertSettingsAsync<T>(T settings) where T : class, ISettings, new()
         {
             var settingsCreate = new List<Meta>();
@@ -129,10 +124,6 @@ namespace Mok.Settings
         /// <summary>
         /// Returns and caches all settings, returns null if no setting records found.
         /// </summary>
-        /// <remarks>
-        /// I cache all settings so that when retrieving each type of settings, e.g. Core, Blog etc. 
-        /// will not hit database again.
-        /// </remarks>
         private async Task<IEnumerable<Meta>> GetAllSettingsAsync()
         {
             return await cache.GetAsync(KEY_ALL_SETTINGS, Time_All_Settings, async () =>
