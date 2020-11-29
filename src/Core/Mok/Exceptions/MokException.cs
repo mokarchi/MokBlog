@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FluentValidation.Results;
+using System;
+using System.Collections.Generic;
 
 namespace Mok.Exceptions
 {
@@ -15,6 +17,18 @@ namespace Mok.Exceptions
 
         public MokException()
         {
+        }
+
+        /// <summary>
+        /// Thrown when <see cref="ValidationResult.IsValid"/> is false. 
+        /// </summary>
+        /// <param name="message">Summary of what's happening</param>
+        /// <param name="result">Individual errors inside the result</param>
+        public MokException(string message, IList<ValidationFailure> validationFailures)
+            : base(message)
+        {
+            ValidationErrors = validationFailures;
+            ExceptionType = EExceptionType.ValidationError;
         }
 
         /// <summary>
@@ -46,5 +60,11 @@ namespace Mok.Exceptions
         {
             ExceptionType = exceptionType;
         }
+
+        /// <summary>
+        /// A list of <see cref="ValidationFailure"/>. Null if the exception thrown is not
+        /// as a result of <see cref="ValidationResult.IsValid"/> being false.
+        /// </summary>
+        public IList<ValidationFailure> ValidationErrors { get; }
     }
 }
