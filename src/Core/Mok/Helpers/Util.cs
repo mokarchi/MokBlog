@@ -187,6 +187,30 @@ namespace Mok.Helpers
         }
 
         /// <summary>
+        /// Returns a new slug by appending a counter to the given slug.
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <param name="i"></param>
+        /// <returns></returns>
+        public static string UniquefySlug(string slug, ref int i)
+        {
+            if (slug.IsNullOrEmpty()) return slug;
+
+            var lookup = $"-{i}";
+            if (slug.EndsWith(lookup))
+            {
+                var idx = slug.LastIndexOf(lookup);
+                slug = slug.Remove(idx, lookup.Length).Insert(idx, $"-{++i}");
+            }
+            else
+            {
+                slug = $"{slug}-{i}";
+            }
+
+            return slug;
+        }
+
+        /// <summary>
         /// Returns excerpt give body of a post. Returns empty string if body is null or operation
         /// fails. The returned string 
         /// </summary>
