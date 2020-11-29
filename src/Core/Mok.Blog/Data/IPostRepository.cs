@@ -17,6 +17,25 @@ namespace Mok.Blog.Data
     public interface IPostRepository : IRepository<Post>
     {
         /// <summary>
+        /// Creates a <see cref="Post"/>.
+        /// </summary>
+        /// <param name="post">The post to create.</param>
+        /// <param name="categoryTitle">The category title is available when called from metaweblog.</param>
+        /// <param name="tagTitles">A list of tag titles associated with the post.</param>
+        /// <returns>
+        /// The inserted post with id.
+        /// </returns>
+        Task<Post> CreateAsync(Post post, string categoryTitle, IEnumerable<string> tagTitles);
+
+        /// <summary>
+        /// Updates a <see cref="Post"/>.
+        /// </summary>
+        /// <param name="post">The post to update.</param>
+        /// <param name="categoryTitle">The category title of the blog post input.</param>
+        /// <param name="tagTitles">A list of tag titles associated with the post.</param>
+        Task UpdateAsync(Post post, string categoryTitle, IEnumerable<string> tagTitles);
+
+        /// <summary>
         /// Returns a list of posts and total post count by query or empty list if no posts found.
         /// </summary>
         /// <param name="query"></param>
@@ -30,5 +49,10 @@ namespace Mok.Blog.Data
         /// <param name="id"></param>
         /// <param name="type">If it's BlogPost it'll return category and tags with it.</param>
         Task<Post> GetAsync(int id, EPostType type);
+
+        /// <summary>
+        /// Returns a <see cref="EPostStatus.Published"/> <see cref="Post"/>, returns null if it's not found.
+        /// </summary>
+        Task<Post> GetAsync(string slug, int year, int month, int day);
     }
 }

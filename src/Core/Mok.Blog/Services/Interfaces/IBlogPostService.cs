@@ -6,6 +6,15 @@ namespace Mok.Blog.Services.Interfaces
     public interface IBlogPostService
     {
         /// <summary>
+        /// Creates a <see cref="BlogPost"/>.
+        /// </summary>
+        Task<BlogPost> CreateAsync(BlogPost post);
+        /// <summary>
+        /// Updates a <see cref="BlogPost"/>.
+        /// </summary>
+        Task<BlogPost> UpdateAsync(BlogPost post);
+
+        /// <summary>
         /// Returns <see cref="BlogPostList"/> for blog main index.
         /// </summary>
         /// <param name="pageIndex">Pagination 1-based</param>

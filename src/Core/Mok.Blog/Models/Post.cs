@@ -4,6 +4,9 @@ using Mok.Blog.Enums;
 using System.ComponentModel.DataAnnotations;
 using Mok.Membership;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Mok.Exceptions;
+using Mok.Blog.Validators;
 
 namespace Mok.Blog.Models
 {
@@ -13,6 +16,21 @@ namespace Mok.Blog.Models
         {
             PostTags = new HashSet<PostTag>();
         }
+
+        /// <summary>
+        /// Validates a post object and throws <see cref="FanException"/> if validation fails.
+        /// </summary>
+        /// <returns></returns>
+        public async Task ValidateTitleAsync()
+        {
+            var validator = new PostTitleValidator();
+            var result = await validator.ValidateAsync(this);
+            if (!result.IsValid)
+            {
+                throw new MokException($"{Type} title is not valid.", result.Errors);
+            }
+        }
+
         /// <summary>
         /// Post body in html.
         /// </summary>

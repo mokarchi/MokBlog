@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Mok.Blog.Enums;
+using Mok.Blog.Helpers;
 using Mok.Blog.Models;
 using Mok.Blog.Models.Input;
 using Mok.Blog.Services.Interfaces;
@@ -123,6 +125,59 @@ namespace Mok.WebApp.Manage.Admin.Compose
             var tags = await _tagSvc.GetAllAsync();
             var allTags = tags.Select(t => t.Title).ToArray();
             TagsJson = JsonConvert.SerializeObject(allTags);
+        }
+
+        /// <summary>
+        /// Ajax POST to save a post as draft.
+        /// </summary>
+        /// <returns>
+        /// The updated <see cref="BlogPost"/>.
+        /// </returns>
+        /// <remarks>
+        /// This is called by either auto save or user clicking on Save.
+        /// </remarks>
+        public async Task<JsonResult> OnPostSaveAsync([FromBody] BlogPostIM postIM)
+        {
+            var blogPost = new BlogPost
+            {
+                CategoryId = postIM.CategoryId,
+                CreatedOn = BlogUtil.GetCreatedOn(postIM.PostDate),
+                TagTitles = postIM.Tags,
+                Slug = postIM.Slug,
+                Excerpt = postIM.Excerpt,
+                Title = postIM.Title,
+                Body = postIM.Body,
+                Status = EPostStatus.Draft,
+            };
+
+            if (postIM.Id <= 0)
+            {
+                blogPost = await _blogSvc.CreateAsync(blogPost);
+            }
+            else
+            {
+                blogPost.Id = postIM.Id;
+                blogPost = await _blogSvc.UpdateAsync(blogPost);
+            }
+
+            var coreSettings = await _settingSvc.GetSettingsAsync<CoreSettings>();
+
+            var postVM = new BlogPostIM
+            {
+                Id = blogPost.Id,
+                Title = blogPost.Title,
+                Body = blogPost.Body,
+                PostDate = blogPost.CreatedOn.ToString(DATE_FORMAT),
+                Slug = blogPost.Slug,
+                Excerpt = blogPost.Excerpt,
+                CategoryId = blogPost.CategoryId ?? 1,
+                Tags = blogPost.TagTitles,
+                Published = blogPost.Status == EPostStatus.Published,
+                IsDraft = blogPost.Status == EPostStatus.Draft,
+                DraftDate = blogPost.UpdatedOn.HasValue ? blogPost.UpdatedOn.Value.ToDisplayString(coreSettings.TimeZoneId) : "",
+            };
+
+            return new JsonResult(postVM);
         }
     }
 }

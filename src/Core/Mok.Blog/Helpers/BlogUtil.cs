@@ -50,5 +50,17 @@ namespace Mok.Blog.Helpers
                 }).CreateMapper();
             }
         }
+
+        /// <summary>
+        /// Returns a DateTimeOffset by appending current time to the given date string for example "2018-05-18".
+        /// </summary>
+        /// <param name="date">A date string for example "2018-05-18"</param>
+        /// <returns></returns>
+        public static DateTimeOffset GetCreatedOn(string date)
+        {
+            var dt = DateTimeOffset.Parse(date);
+            return new DateTimeOffset(dt.Year, dt.Month, dt.Day, DateTimeOffset.Now.Hour, DateTimeOffset.Now.Minute, DateTimeOffset.Now.Second,
+                DateTimeOffset.Now.Offset);
+        }
     }
 }

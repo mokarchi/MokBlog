@@ -11,6 +11,12 @@ using System.Threading.Tasks;
 using Mok.Helpers;
 using System;
 using Mok.Exceptions;
+using Mok.Settings;
+using system;
+using Mok.Blog.Validators;
+using Mok.Blog.Events;
+using MediatR;
+using System.Collections.Generic;
 
 namespace Mok.Blog.Services
 {
@@ -21,18 +27,24 @@ namespace Mok.Blog.Services
         private readonly ILogger<BlogPostService> logger;
         private readonly IMapper mapper;
         private readonly IImageService imageService;
+        private readonly ISettingService settingService;
+        private readonly IMediator mediator;
 
-        public BlogPostService(IPostRepository postRepository, 
+        public BlogPostService(ISettingService settingService, 
+                               IPostRepository postRepository, 
                                IDistributedCache cache,
                                ILogger<BlogPostService> logger,
                                IImageService imageService,
-                               IMapper mapper)
+                               IMapper mapper,
+                               IMediator mediator)
         {
+            this.settingService = settingService;
             this.postRepository = postRepository;
             this.imageService = imageService;
             this.cache = cache;
             this.logger = logger;
             this.mapper = mapper;
+            this.mediator = mediator;
         }
 
         /// <summary>
@@ -106,6 +118,79 @@ namespace Mok.Blog.Services
         {
             var post = await QueryPostAsync(id);
             return ConvertToBlogPost(post);
+        }
+
+        /// <summary>
+        /// Creates a <see cref="BlogPost"/>.
+        /// </summary>
+        /// <param name="blogPost">Contains incoming blog post data to create.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// It creates tags, post and invalidates cache for posts on index page.
+        /// </remarks>
+        public async Task<BlogPost> CreateAsync(BlogPost blogPost)
+        {
+            // validate
+            if (blogPost == null) throw new ArgumentNullException(nameof(blogPost));
+            await blogPost.ValidateTitleAsync();
+
+            // prep
+            var post = await ConvertToPostAsync(blogPost, ECreateOrUpdate.Create);
+
+            // before create
+            await mediator.Publish(new BlogPostBeforeCreate
+            {
+                CategoryTitle = blogPost.CategoryTitle,
+                TagTitles = blogPost.TagTitles
+            });
+
+            // create (post will get new id)
+            await postRepository.CreateAsync(post, blogPost.CategoryTitle, blogPost.TagTitles);
+
+            // invalidate cache only when published
+            if (blogPost.Status == EPostStatus.Published)
+            {
+                await RemoveBlogCacheAsync();
+            }
+
+            // after create
+            await mediator.Publish(new BlogPostCreated { BlogPost = blogPost });
+
+            return await GetAsync(post.Id);
+        }
+
+        /// <summary>
+        /// Updates a <see cref="BlogPost"/>.
+        /// </summary>
+        /// <param name="blogPost">Contains incoming blog post data to update.</param>
+        public async Task<BlogPost> UpdateAsync(BlogPost blogPost)
+        {
+            // validate
+            if (blogPost == null || blogPost.Id <= 0) throw new ArgumentException(null, nameof(blogPost));
+            await blogPost.ValidateTitleAsync();
+
+            // prep current post with blog post
+            var post = await ConvertToPostAsync(blogPost, ECreateOrUpdate.Update);
+
+            // before update
+            await mediator.Publish(new BlogPostBeforeUpdate
+            {
+                CategoryTitle = blogPost.CategoryTitle,
+                TagTitles = blogPost.TagTitles,
+                PostTags = post.PostTags,
+            });
+
+            // update
+            await postRepository.UpdateAsync(post, blogPost.CategoryTitle, blogPost.TagTitles);
+
+            // invalidate cache 
+            await RemoveBlogCacheAsync();
+            await RemoveSinglePostCacheAsync(post);
+
+            // after update
+            await mediator.Publish(new BlogPostUpdated { BlogPost = blogPost });
+
+            return await GetAsync(post.Id);
         }
 
         /// <summary>
@@ -183,6 +268,109 @@ namespace Mok.Blog.Services
 
             logger.LogDebug("Show {@BlogPost}", blogPost);
             return blogPost;
+        }
+
+        /// <summary>
+        /// Prepares a <see cref="BlogPost"/> into Post for create or update.
+        /// </summary>
+        /// <param name="blogPost">The incoming post with user data.</param>
+        /// <param name="createOrUpdate">User is doing either a create or update post.</param>
+        /// <returns></returns>
+        private async Task<Post> ConvertToPostAsync(BlogPost blogPost, ECreateOrUpdate createOrUpdate)
+        {
+            // Get post
+            var post = (createOrUpdate == ECreateOrUpdate.Create) ? new Post() : await QueryPostAsync(blogPost.Id);
+
+            // CreatedOn
+            if (createOrUpdate == ECreateOrUpdate.Create)
+            {
+                // post time will be min value if user didn't set a time
+                post.CreatedOn = (blogPost.CreatedOn <= DateTimeOffset.MinValue) ? DateTimeOffset.UtcNow : blogPost.CreatedOn.ToUniversalTime();
+            }
+            else
+            {
+                // TODO Add a time picker on the composer
+
+                // get post.CreatedOn in local time
+                var coreSettings = await settingService.GetSettingsAsync<CoreSettings>();
+                var postCreatedOnLocal = post.CreatedOn.ToLocalTime(coreSettings.TimeZoneId);
+
+                // user changed the post time 
+                if (!postCreatedOnLocal.YearMonthDayEquals(blogPost.CreatedOn))
+                    post.CreatedOn = (blogPost.CreatedOn <= DateTimeOffset.MinValue) ? post.CreatedOn : blogPost.CreatedOn.ToUniversalTime();
+            }
+
+            // UpdatedOn (DraftSavedOn)
+            // when saving a draft this should be utc now, when publishing it becomes null
+            if (blogPost.Status == EPostStatus.Draft) post.UpdatedOn = DateTimeOffset.UtcNow;
+            else post.UpdatedOn = null;
+
+            // Slug 
+            if (blogPost.Status == EPostStatus.Draft && blogPost.Title.IsNullOrEmpty())
+                post.Slug = null; // if user save a draft with empty title
+            else
+                post.Slug = await GetBlogPostSlugAsync(blogPost.Slug.IsNullOrEmpty() ? blogPost.Title : blogPost.Slug,
+                                                       post.CreatedOn, createOrUpdate, blogPost.Id);
+
+            // Title
+            post.Title = blogPost.Title; // looks like OLW html encodes post title
+
+            // Body & Excerpt, UserId
+            post.Body = blogPost.Body.IsNullOrWhiteSpace() ? null : blogPost.Body;
+            post.Excerpt = blogPost.Excerpt.IsNullOrWhiteSpace() ? null : blogPost.Excerpt;
+            post.UserId = blogPost.UserId;
+
+            // Status & CommentStatus
+            post.Status = blogPost.Status;
+            post.CommentStatus = blogPost.CommentStatus;
+
+            // CategoryId
+            post.CategoryId = blogPost.CategoryId;
+
+            logger.LogDebug(createOrUpdate + " {@Post}", post);
+            return post;
+        }
+
+        /// <summary>
+        /// Returns a unique and valid slug for a blog post.
+        /// </summary>
+        /// <param name="input">This could be a slug or post title.</param>
+        /// <param name="createdOn">Used for making sure slug is unique by searching posts.</param>
+        /// <param name="createOrUpdate">Whether the operation is create or update post.</param>
+        /// <param name="blogPostId">Used for making sure slug is unique when updating.</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// If input is slug, either this is update or a create with user inputted slug, then <see cref="Util.Slugify(string)"/>
+        /// will not alter it. This is very important for SEO as updating slug on an existing post will
+        /// break links in search results. On the other hand, if user deliberately updated the slug
+        /// when doing an update on post, then it will alter it accordingly. Please see the test case
+        /// on this method.
+        /// </remarks>
+        internal async Task<string> GetBlogPostSlugAsync(string input, DateTimeOffset createdOn, ECreateOrUpdate createOrUpdate, int blogPostId)
+        {
+            // make slug
+            var slug = Util.Slugify(input, maxlen: PostTitleValidator.TITLE_MAXLEN, randomCharCountOnEmpty: 8);
+
+            // make sure slug is unique
+            int i = 2;
+            if (createOrUpdate == ECreateOrUpdate.Create) // create
+            {
+                while (await postRepository.GetAsync(slug, createdOn.Year, createdOn.Month, createdOn.Day) != null)
+                {
+                    slug = Util.UniquefySlug(slug, ref i);
+                }
+            }
+            else // update
+            {
+                var p = await postRepository.GetAsync(slug, createdOn.Year, createdOn.Month, createdOn.Day);
+                while (p != null && p.Id != blogPostId)
+                {
+                    slug = Util.UniquefySlug(slug, ref i);
+                    p = await postRepository.GetAsync(slug, createdOn.Year, createdOn.Month, createdOn.Day);
+                }
+            }
+
+            return slug;
         }
 
         /// <summary>
