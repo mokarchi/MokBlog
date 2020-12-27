@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Mok.Blog.Data;
+using Mok.Blog.Events;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
@@ -9,6 +11,7 @@ using Mok.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mok.Blog.Services
@@ -16,7 +19,8 @@ namespace Mok.Blog.Services
     /// <summary>
     /// Unit tests for <see cref="TagService"/>.
     /// </summary>
-    public class TagService : ITagService
+    public class TagService : ITagService,
+                               INotificationHandler<BlogPostBeforeCreate>
     {
         private readonly ITagRepository tagRepository;
         private readonly IDistributedCache cache;
@@ -190,6 +194,32 @@ namespace Mok.Blog.Services
             title = Util.CleanHtml(title);
             title = title.Length > TITLE_MAXLEN ? title.Substring(0, TITLE_MAXLEN) : title;
             return title;
+        }
+
+        /// <summary>
+        /// Handles the <see cref="BlogPostBeforeCreate"/> event by creating any new tags.
+        /// </summary>
+        /// <param name="notification"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task Handle(BlogPostBeforeCreate notification, CancellationToken cancellationToken)
+        {
+            if (notification.TagTitles == null || notification.TagTitles.Count <= 0) return;
+
+            // make sure list has no empty strings and only unique values
+            var distinctTitles = notification.TagTitles.Where(s => !string.IsNullOrWhiteSpace(s)).Distinct();
+            var allTags = await GetAllAsync();
+
+            // create any new tags
+            foreach (var title in distinctTitles)
+            {
+                // make sure the incoming title does not already exist
+                var tag = allTags.FirstOrDefault(t => t.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase));
+                if (tag == null)
+                {
+                    tag = await CreateAsync(new Tag { Title = title });
+                }
+            }
         }
     }
 }
