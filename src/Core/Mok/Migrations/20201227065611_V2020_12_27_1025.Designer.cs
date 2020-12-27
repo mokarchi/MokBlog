@@ -10,8 +10,8 @@ using Mok.Data;
 namespace Mok.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201116091543_V2020_11_16_1244")]
-    partial class V2020_11_16_1244
+    [Migration("20201227065611_V2020_12_27_1025")]
+    partial class V2020_12_27_1025
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -245,6 +245,10 @@ namespace Mok.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(32)")
+                        .HasMaxLength(32);
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");

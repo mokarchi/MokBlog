@@ -10,6 +10,12 @@ namespace Mok.Blog.Models
     /// </summary>
     public class Tag : Entity
     {
+        public Tag()
+        {
+            Color = "#666";
+            PostTags = new HashSet<PostTag>();
+        }
+
         /// <summary>
         /// Text of the term.
         /// </summary>
@@ -37,6 +43,9 @@ namespace Mok.Blog.Models
         /// </summary>
         [NotMapped]
         public int Count { get; set; }
+
+        [StringLength(32)]
+        public string Color { get; set; }
 
         public virtual ICollection<PostTag> PostTags { get; set; }
     }

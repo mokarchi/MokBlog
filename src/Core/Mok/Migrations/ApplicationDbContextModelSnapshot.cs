@@ -244,6 +244,10 @@ namespace Mok.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(32)")
+                        .HasMaxLength(32);
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 

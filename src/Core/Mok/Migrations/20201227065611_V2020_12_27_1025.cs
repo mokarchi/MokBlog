@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Mok.Migrations
 {
-    public partial class V2020_11_16_1244 : Migration
+    public partial class V2020_12_27_1025 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -31,7 +31,8 @@ namespace Mok.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(maxLength: 256, nullable: false),
                     Slug = table.Column<string>(maxLength: 256, nullable: false),
-                    Description = table.Column<string>(nullable: true)
+                    Description = table.Column<string>(nullable: true),
+                    Color = table.Column<string>(maxLength: 32, nullable: true)
                 },
                 constraints: table =>
                 {
