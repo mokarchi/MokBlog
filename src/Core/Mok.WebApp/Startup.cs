@@ -76,6 +76,15 @@ namespace Mok.WebApp
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                #if DEBUG
+                app.UseBrowserLink();
+                #endif
+                app.UseDatabaseErrorPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
             }
 
             app.UseStaticFiles();
