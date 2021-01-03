@@ -18,7 +18,7 @@ namespace Mok.Blog.Models
         }
 
         /// <summary>
-        /// Validates a post object and throws <see cref="FanException"/> if validation fails.
+        /// Validates a post object and throws <see cref="MokException"/> if validation fails.
         /// </summary>
         /// <returns></returns>
         public async Task ValidateTitleAsync()
@@ -52,7 +52,7 @@ namespace Mok.Blog.Models
         /// <remarks>
         /// Nullable FK to Category. NOTE: Sql Server will not create cascade delete for a nullable FK.
         /// Therefore deleting a category by user won't delete its associated posts, 
-        /// <see cref="Mok.Data.SqlCategoryRepository.DeleteAsync(int, int)"/> for more details.
+        /// <see cref="Fan.Data.SqlCategoryRepository.DeleteAsync(int, int)"/> for more details.
         /// </remarks>
         public int? CategoryId { get; set; }
 
@@ -151,5 +151,20 @@ namespace Mok.Blog.Models
         public int ViewCount { get; set; }
 
         public virtual ICollection<PostTag> PostTags { get; set; }
+
+        /// <summary>
+        /// The featured image id.
+        /// </summary>
+        //public int? FeaturedImageId { get; set; }
+
+        /// <summary>
+        /// A parent page's Table of Content.
+        /// </summary>
+        /// <remarks>
+        /// Saved in markdown and converted to HTML when displayed to public.
+        /// </remarks>
+        public string Nav { get; set; }
+
+        public byte? PageLayout { get; set; }
     }
 }

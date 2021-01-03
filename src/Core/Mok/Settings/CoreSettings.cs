@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Mok.Navigation;
 
 namespace Mok.Settings
 {
@@ -12,7 +10,12 @@ namespace Mok.Settings
         /// <summary>
         /// Title of the blog. Default "Fanray".
         /// </summary>
-        public string Title { get; set; } = "Mok";
+        public string Title { get; set; } = "Fanray";
+
+        /// <summary>
+        /// Short description on what the blog is about. Default "A fanray blog".
+        /// </summary>
+        public string Tagline { get; set; } = "A fanray blog";
 
         /// <summary>
         /// Default theme "Clarity".
@@ -31,8 +34,21 @@ namespace Mok.Settings
         public string TimeZoneId { get; set; } = "UTC";
 
         /// <summary>
+        /// The Google Analytics Tracking ID.
+        /// </summary>
+        /// <remarks>
+        /// https://analytics.google.com
+        /// </remarks>
+        public string GoogleAnalyticsTrackingID { get; set; }
+
+        /// <summary>
         /// Has the setup happened, true will let system skip setup, false will forward to setup page.
         /// </summary>
         public bool SetupDone { get; set; } = false;
+
+        /// <summary>
+        /// Home page of the site. Default to blog app.
+        /// </summary>
+        public Nav Home { get; set; } = new Nav { Id = App.BLOG_APP_ID, Type = ENavType.App };
     }
 }

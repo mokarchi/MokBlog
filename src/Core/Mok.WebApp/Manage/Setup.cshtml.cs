@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -9,11 +10,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
+using Mok.Blog.Enums;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
 using Mok.Membership;
+using Mok.Navigation;
 using Mok.Settings;
+using Mok.Themes;
 using Newtonsoft.Json;
 
 namespace Mok.WebApp.Manage
@@ -25,6 +29,9 @@ namespace Mok.WebApp.Manage
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<Role> _roleManager;
         private readonly ICategoryService _catSvc;
+        private readonly IPageService pageService;
+        private readonly IWebHostEnvironment hostingEnvironment;
+        private readonly INavigationService navigationService;
         private readonly ILogger<SetupModel> _logger;
 
         public const string SETUP_DATA_DIR = "Setup";
@@ -34,6 +41,9 @@ namespace Mok.WebApp.Manage
                           SignInManager<User> signInManager,
                           RoleManager<Role> roleManager,
                           ICategoryService catService,
+                          IPageService pageService,
+                          IWebHostEnvironment hostingEnvironment,
+                          INavigationService navigationService,
                           ILogger<SetupModel> logger)
         {
             this.settingService = settingService;
@@ -41,6 +51,9 @@ namespace Mok.WebApp.Manage
             _signInManager = signInManager;
             _roleManager = roleManager;
             _catSvc = catService;
+            this.pageService = pageService;
+            this.hostingEnvironment = hostingEnvironment;
+            this.navigationService = navigationService;
             _logger = logger;
         }
 
@@ -237,6 +250,59 @@ namespace Mok.WebApp.Manage
             }
 
             _logger.LogInformation("Blog categories created");
+        }
+
+        /// <summary>
+        /// Creates default pages and setup navigation.
+        /// </summary>
+        /// <returns></returns>
+        private async Task SetupPagesAndNavigationAsync()
+        {
+            // "about"
+            var aboutPage = await pageService.CreateAsync(new Blog.Models.Page
+            {
+                UserId = 1,
+                Title = "About",
+                Status = EPostStatus.Published,
+                CreatedOn = DateTimeOffset.Now,
+                PageLayout = (byte)EPageLayout.Layout1, // default
+                Excerpt = "About the Mok project.",
+                Body = await GetSetupFileContent("page-about.html"),
+                BodyMark = await GetSetupFileContent("page-about.md"),
+            });
+
+            _logger.LogInformation("Default pages created");
+
+            // Blog (App)
+            await navigationService.AddNavToMenuAsync(EMenu.Menu1, 0, new Nav
+            {
+                Id = App.BLOG_APP_ID,
+                Text = App.BLOG_APP_NAME,
+                Type = ENavType.App
+            });
+
+
+            // About (Page)
+            await navigationService.AddNavToMenuAsync(EMenu.Menu1, 2, new Nav
+            {
+                Id = aboutPage.Id,
+                Text = aboutPage.Title,
+                Type = ENavType.Page
+            });
+
+            _logger.LogInformation("Site navigation created");
+        }
+
+        /// <summary>
+        /// Returns the setup file content.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        private async Task<string> GetSetupFileContent(string fileName)
+        {
+            var setupPath = Path.Combine(hostingEnvironment.ContentRootPath, SETUP_DATA_DIR);
+            var filePath = Path.Combine(setupPath, fileName);
+            return await System.IO.File.ReadAllTextAsync(filePath);
         }
     }
 
