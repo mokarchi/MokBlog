@@ -10,6 +10,11 @@ namespace Mok.Settings
     public class CoreSettings : ISettings
     {
         /// <summary>
+        /// Title of the blog. Default "Fanray".
+        /// </summary>
+        public string Title { get; set; } = "Mok";
+
+        /// <summary>
         /// Default theme "Clarity".
         /// </summary>
         /// <remarks>

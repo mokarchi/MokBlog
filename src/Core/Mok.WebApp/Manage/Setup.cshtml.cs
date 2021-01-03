@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentValidation;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
+using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
+using Mok.Exceptions;
 using Mok.Membership;
 using Mok.Settings;
 using Newtonsoft.Json;
@@ -18,12 +21,27 @@ namespace Mok.WebApp.Manage
     public class SetupModel : PageModel
     {
         private readonly ISettingService settingService;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly RoleManager<Role> _roleManager;
+        private readonly ICategoryService _catSvc;
+        private readonly ILogger<SetupModel> _logger;
 
         public const string SETUP_DATA_DIR = "Setup";
 
-        public SetupModel(ISettingService settingService)
+        public SetupModel(ISettingService settingService,
+                          UserManager<User> userManager,
+                          SignInManager<User> signInManager,
+                          RoleManager<Role> roleManager,
+                          ICategoryService catService,
+                          ILogger<SetupModel> logger)
         {
             this.settingService = settingService;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _roleManager = roleManager;
+            _catSvc = catService;
+            _logger = logger;
         }
 
         public string Title { get; set; }
@@ -55,6 +73,215 @@ namespace Mok.WebApp.Manage
             TimeZonesJson = JsonConvert.SerializeObject(TimeZones);
 
             return Page();
+        }
+
+        /// <summary>
+        /// Setting up site.
+        /// </summary>
+        /// <remarks>
+        /// It creates the first user, system roles, assign Administrator role to the user, 
+        /// core settings, first blog post and blog settings.
+        /// </remarks>
+        public async Task<IActionResult> OnPostAsync([FromBody] SetupModel model)
+        {
+            try
+            {
+                _logger.LogInformation("Fanray setup begins");
+
+                var validator = new SetupValidator();
+                var valResult = await validator.ValidateAsync(model);
+                if (!valResult.IsValid)
+                {
+                    throw new MokException($"Failed to create blog.", valResult.Errors);
+                }
+
+                // first user
+                var user = new User
+                {
+                    UserName = model.UserName,
+                    Email = model.Email,
+                    DisplayName = model.DisplayName
+                };
+
+                IdentityResult result = IdentityResult.Success;
+
+                // create user if not found
+                var foundUser = await _userManager.FindByEmailAsync(model.Email);
+                if (foundUser == null)
+                {
+                    result = await _userManager.CreateAsync(user, model.Password);
+                }
+                else // update username
+                {
+                    foundUser.UserName = model.UserName;
+                    await _userManager.UpdateNormalizedUserNameAsync(foundUser);
+                }
+
+                // create system roles
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("{@User} account created.", user);
+
+                    result = await CreateSystemRolesAsync();
+                }
+
+                // assign Administrator role to the user
+                if (result.Succeeded)
+                {
+                    // get the actual user object before look up IsInRole
+                    user = await _userManager.FindByEmailAsync(user.Email);
+
+                    if (!await _userManager.IsInRoleAsync(user, Role.ADMINISTRATOR_ROLE))
+                        result = await _userManager.AddToRoleAsync(user, Role.ADMINISTRATOR_ROLE);
+                }
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation($"{Role.ADMINISTRATOR_ROLE} role has been assigned to user {@User}.", user);
+
+                    // update or create core settings
+                    var settings = await settingService.GetSettingsAsync<CoreSettings>();
+                    if (settings != null)
+                    {
+                        settings.Title = model.Title;
+                        settings.TimeZoneId = model.TimeZoneId;
+                        settings.SetupDone = true;
+                        await settingService.UpsertSettingsAsync(settings);
+                    }
+                    else
+                    {
+                        await settingService.UpsertSettingsAsync(new CoreSettings
+                        {
+                            Title = model.Title,
+                            TimeZoneId = model.TimeZoneId,
+                            SetupDone = true,
+                        });
+                    }
+                    _logger.LogInformation("CoreSettings created");
+
+                    // sign-in user
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    _logger.LogInformation("User has been signed in");
+
+                    // setup blog
+                    await SetupBlogSettingsAndPostsAsync();
+                    await SetupPagesAndNavigationAsync();
+                    await SetupThemePluginsAndWidgetsAsync();
+                    _logger.LogInformation("Blog setup completes");
+
+                    return new JsonResult(true);
+                }
+
+                return BadRequest(result.Errors.ToList()[0].Description);
+            }
+            catch (MokException ex)
+            {
+                return BadRequest(ex.ValidationErrors[0].ErrorMessage);
+            }
+        }
+
+        /// <summary>
+        /// Creates pre-defined system roles.
+        /// </summary>
+        private async Task<IdentityResult> CreateSystemRolesAsync()
+        {
+            IdentityResult result = IdentityResult.Success;
+
+            // Administrator role
+            if (!await _roleManager.RoleExistsAsync(Role.ADMINISTRATOR_ROLE))
+            {
+                result = await _roleManager.CreateAsync(new Role
+                {
+                    Name = Role.ADMINISTRATOR_ROLE,
+                    IsSystemRole = true,
+                    Description = "Administrator has full power over the site and can do everything."
+                });
+                _logger.LogInformation($"{Role.ADMINISTRATOR_ROLE} role created.");
+            }
+
+            // Editor role
+            if (!await _roleManager.RoleExistsAsync(Role.EDITOR_ROLE))
+            {
+                result = await _roleManager.CreateAsync(new Role
+                {
+                    Name = Role.EDITOR_ROLE,
+                    IsSystemRole = true,
+                    Description = "Editor can only publish and manage posts including the posts of other users."
+                });
+                _logger.LogInformation($"{Role.EDITOR_ROLE} role created.");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates the settings, tags and the default category.
+        /// </summary>
+        private async Task SetupBlogSettingsAndPostsAsync()
+        {
+            var blogSettings = await settingService.GetSettingsAsync<BlogSettings>(); // could be initial or an existing blogsettings
+            await settingService.UpsertSettingsAsync(blogSettings);
+            _logger.LogInformation("Blog settings created");
+
+            const string DEFAULT_CATEGORY = "Software Development";
+
+            // get default cat
+            Category defaultCat;
+            try
+            {
+                defaultCat = await _catSvc.GetAsync(blogSettings.DefaultCategoryId);
+            }
+            catch (MokException)
+            {
+                defaultCat = await _catSvc.CreateAsync(DEFAULT_CATEGORY);
+            }
+
+            _logger.LogInformation("Blog categories created");
+        }
+    }
+
+    public class SetupValidator : AbstractValidator<SetupModel>
+    {
+        /// <summary>
+        /// DisplayName or UserName should be at least 2 chars min.
+        /// </summary>
+        public const int NAME_MINLENGTH = 2;
+        /// <summary>
+        /// UserName should be no more than 20 chars max.
+        /// </summary>
+        public const int USERNAME_MAXLENGTH = 20;
+        /// <summary>
+        /// DisplayName should be no more than 32 chars max.
+        /// </summary>
+        public const int DISPLAYNAME_MAXLENGTH = 32;
+        /// <summary>
+        /// Password should be at least 8 chars min.
+        /// </summary>
+        public const int PASSWORD_MINLENGTH = 8;
+        /// <summary>
+        /// UserName can only contain alphanumeric, dash and underscore.
+        /// </summary>
+        public const string USERNAME_REGEX = @"^[a-zA-Z0-9-_]+$";
+
+        public SetupValidator()
+        {
+            // Email
+            RuleFor(s => s.Email).EmailAddress();
+
+            // UserName
+            RuleFor(s => s.UserName)
+                .NotEmpty()
+                .Length(NAME_MINLENGTH, USERNAME_MAXLENGTH)
+                .Matches(USERNAME_REGEX)
+                .WithMessage(s => $"Username '{s.UserName}' is not available.");
+
+            // DisplayName
+            RuleFor(s => s.DisplayName)
+                .NotEmpty()
+                .Length(NAME_MINLENGTH, DISPLAYNAME_MAXLENGTH);
+
+            // Password
+            RuleFor(s => s.Password).MinimumLength(PASSWORD_MINLENGTH);
         }
     }
 }
