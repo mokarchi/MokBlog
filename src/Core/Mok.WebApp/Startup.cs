@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Mok.Blog.Services.Interfaces;
 using Mok.Data;
 using Scrutor;
 using Newtonsoft.Json;
@@ -87,6 +86,7 @@ namespace Mok.WebApp
                 app.UseHsts();
             }
 
+            app.UseSetup();
             app.UseStaticFiles();
             app.UseRouting();
 
