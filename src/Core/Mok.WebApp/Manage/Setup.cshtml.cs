@@ -179,7 +179,6 @@ namespace Mok.WebApp.Manage
                     // setup blog
                     await SetupBlogSettingsAndPostsAsync();
                     await SetupPagesAndNavigationAsync();
-                    await SetupThemePluginsAndWidgetsAsync();
                     _logger.LogInformation("Blog setup completes");
 
                     return new JsonResult(true);
