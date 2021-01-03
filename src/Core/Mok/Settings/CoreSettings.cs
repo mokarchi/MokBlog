@@ -24,5 +24,10 @@ namespace Mok.Settings
         /// To learn more about timezone id <see cref="System.TimeZoneInfo.Id"/> and <see cref="http://stackoverflow.com/a/7908482/32240"/>
         /// </remarks>
         public string TimeZoneId { get; set; } = "UTC";
+
+        /// <summary>
+        /// Has the setup happened, true will let system skip setup, false will forward to setup page.
+        /// </summary>
+        public bool SetupDone { get; set; } = false;
     }
 }
