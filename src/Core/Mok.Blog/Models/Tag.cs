@@ -1,4 +1,5 @@
-﻿using MokCore.Data;
+﻿using Mok.Blog.Helpers;
+using MokCore.Data;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -46,6 +47,9 @@ namespace Mok.Blog.Models
 
         [StringLength(32)]
         public string Color { get; set; }
+
+        [NotMapped]
+        public string RelativeLink => BlogRoutes.GetTagRelativeLink(Slug);
 
         public virtual ICollection<PostTag> PostTags { get; set; }
     }

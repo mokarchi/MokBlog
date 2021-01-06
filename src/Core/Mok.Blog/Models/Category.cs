@@ -1,4 +1,5 @@
-﻿using MokCore.Data;
+﻿using Mok.Blog.Helpers;
+using MokCore.Data;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -36,5 +37,11 @@ namespace Mok.Blog.Models
         /// </summary>
         [NotMapped]
         public int Count { get; set; }
+
+        [NotMapped]
+        public string RelativeLink => BlogRoutes.GetCategoryRelativeLink(Slug);
+
+        [NotMapped]
+        public string RssRelativeLink => BlogRoutes.GetCategoryRssRelativeLink(Slug);
     }
 }

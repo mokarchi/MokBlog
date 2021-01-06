@@ -178,6 +178,12 @@ namespace Mok.Migrations
                     b.Property<string>("Excerpt")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Nav")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte?>("PageLayout")
+                        .HasColumnType("tinyint");
+
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
 

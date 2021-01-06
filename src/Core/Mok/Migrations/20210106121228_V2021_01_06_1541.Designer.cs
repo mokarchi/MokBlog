@@ -10,8 +10,8 @@ using Mok.Data;
 namespace Mok.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201227065611_V2020_12_27_1025")]
-    partial class V2020_12_27_1025
+    [Migration("20210106121228_V2021_01_06_1541")]
+    partial class V2021_01_06_1541
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -179,6 +179,12 @@ namespace Mok.Migrations
 
                     b.Property<string>("Excerpt")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nav")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte?>("PageLayout")
+                        .HasColumnType("tinyint");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");

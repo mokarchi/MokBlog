@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Mok.Migrations
 {
-    public partial class V2020_12_27_1025 : Migration
+    public partial class V2021_01_06_1541 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -143,7 +143,9 @@ namespace Mok.Migrations
                     Type = table.Column<byte>(nullable: false),
                     UpdatedOn = table.Column<DateTimeOffset>(nullable: true),
                     UserId = table.Column<int>(nullable: false),
-                    ViewCount = table.Column<int>(nullable: false)
+                    ViewCount = table.Column<int>(nullable: false),
+                    Nav = table.Column<string>(nullable: true),
+                    PageLayout = table.Column<byte>(nullable: true)
                 },
                 constraints: table =>
                 {
