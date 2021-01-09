@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 
 namespace Mok.Helpers
@@ -243,5 +244,11 @@ namespace Mok.Helpers
             }
         }
 
+        /// <summary>
+        /// Returns true if running from a test project.
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsRunningFromTestHost() =>
+            Assembly.GetEntryAssembly().FullName.StartsWith("testhost", StringComparison.OrdinalIgnoreCase);
     }
 }

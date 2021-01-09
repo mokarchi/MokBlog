@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mok.Medias;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,5 +20,14 @@ namespace Mok.Settings
         /// https://your-blob-acct-name.blob.core.windows.net/media/2017/11/file-name.ext
         /// </remarks>
         public string MediaContainerName { get; set; } = "media";
+
+        /// <summary>
+        /// The storage type of uploaded media files: "FileSystem" (default) or "AzureBlob".
+        /// </summary>
+        /// <remarks>
+        /// "FileSystem": files will be stored on file system.
+        /// "AzureBlob": files will be stored in Azure Blob Storage.
+        /// </remarks>
+        public EMediaStorageType MediaStorageType { get; set; } = EMediaStorageType.FileSystem;
     }
 }
