@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,7 @@ namespace Mok.Blog.Tests.Services
     {
         private readonly ICategoryService categoryService;
         private readonly Mock<ICategoryRepository> catRepoMock = new Mock<ICategoryRepository>();
+        private readonly Mock<IMediator> mediatorMock = new Mock<IMediator>();
         private readonly IDistributedCache cache;
 
         public CategoryServiceTest()
@@ -41,7 +43,7 @@ namespace Mok.Blog.Tests.Services
             catRepoMock.Setup(r => r.GetListAsync()).Returns(Task.FromResult(new List<Category> { defaultCat }));
 
             // cat service
-            categoryService = new CategoryService(catRepoMock.Object, settingSvcMock.Object, cache, logger);
+            categoryService = new CategoryService(catRepoMock.Object, settingSvcMock.Object, mediatorMock.Object, cache, logger);
         }
 
         /// <summary>
