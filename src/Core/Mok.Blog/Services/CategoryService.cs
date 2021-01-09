@@ -1,32 +1,42 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Mok.Blog.Data;
+using Mok.Blog.Events;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
 using Mok.Helpers;
+using Mok.Navigation;
 using Mok.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mok.Blog.Services
 {
-    public class CategoryService : ICategoryService
+    public class CategoryService : ICategoryService,
+                                   INavProvider,
+                                   INotificationHandler<BlogPostBeforeCreate>,
+                                   INotificationHandler<BlogPostBeforeUpdate>
     {
         private readonly ICategoryRepository categoryRepository;
         private readonly ISettingService settingService;
+        private readonly IMediator mediator;
         private readonly ILogger<CategoryService> logger;
         private readonly IDistributedCache cache;
         public CategoryService(ICategoryRepository categoryRepository,
                                ISettingService settingService,
+                               IMediator mediator,
                                IDistributedCache cache,
                                ILogger<CategoryService> logger)
         {
             this.categoryRepository = categoryRepository;
             this.settingService = settingService;
+            this.mediator = mediator;
             this.cache = cache;
             this.logger = logger;
         }
@@ -146,6 +156,9 @@ namespace Mok.Blog.Services
             // invalidate cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
             await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
+
+            // raise nav deleted event
+            await mediator.Publish(new NavDeleted { Id = id, Type = ENavType.BlogCategory });
         }
 
         /// <summary>
@@ -180,6 +193,9 @@ namespace Mok.Blog.Services
             await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
             await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
 
+            // raise nav updated event
+            await mediator.Publish(new NavUpdated { Id = category.Id, Type = ENavType.BlogCategory });
+
             // return entity
             logger.LogDebug("Updated {@Category}", entity);
             return entity;
@@ -204,6 +220,60 @@ namespace Mok.Blog.Services
             title = Util.CleanHtml(title);
             title = title.Length > TITLE_MAXLEN ? title.Substring(0, TITLE_MAXLEN) : title;
             return title;
+        }
+
+        public bool CanProvideNav(ENavType type) => type == ENavType.BlogCategory;
+
+        public async Task<string> GetNavUrlAsync(int id)
+        {
+            var cat = await GetAsync(id);
+            return BlogRoutes.GetCategoryRelativeLink(cat.Slug);
+        }
+
+        /// <summary>
+        /// Handles the <see cref="BlogPostBeforeCreate"/> event by creating a new category 
+        /// if not already exists.
+        /// </summary>
+        /// <param name="notification"></param>
+        /// <param name="cancellationToken"></param>
+        /// <remarks>
+        /// This only happens when calling from metaweblog with a new category.
+        /// </remarks>
+        public async Task Handle(BlogPostBeforeCreate notification, CancellationToken cancellationToken)
+        {
+            await HandleNewCatAsync(notification.CategoryTitle);
+        }
+
+        /// <summary>
+        /// Handles the <see cref="BlogPostBeforeUpdate"/> event by creating a new category
+        /// if not already exisits.
+        /// </summary>
+        /// <param name="notification"></param>
+        /// <param name="cancellationToken"></param>
+        /// <remarks>
+        /// This only happens when calling from metaweblog with creating a new category.
+        /// </remarks>
+        public async Task Handle(BlogPostBeforeUpdate notification, CancellationToken cancellationToken)
+        {
+            await HandleNewCatAsync(notification.CategoryTitle);
+        }
+
+        /// <summary>
+        /// Create a new category with the given title if category not exist already.
+        /// </summary>
+        /// <param name="categoryTitle"></param>
+        /// <returns></returns>
+        private async Task HandleNewCatAsync(string categoryTitle)
+        {
+            if (categoryTitle.IsNullOrEmpty()) return;
+
+            // lookup
+            var cat = (await GetAllAsync())
+                   .SingleOrDefault(c => c.Title.Equals(categoryTitle, StringComparison.CurrentCultureIgnoreCase));
+
+            // create if not exist
+            if (cat == null)
+                await CreateAsync(categoryTitle);
         }
     }
 }
