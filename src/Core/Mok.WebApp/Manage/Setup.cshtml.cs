@@ -99,7 +99,7 @@ namespace Mok.WebApp.Manage
         {
             try
             {
-                _logger.LogInformation("Fanray setup begins");
+                _logger.LogInformation("Mok setup begins");
 
                 var validator = new SetupValidator();
                 var valResult = await validator.ValidateAsync(model);
