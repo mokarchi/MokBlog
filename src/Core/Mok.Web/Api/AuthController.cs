@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Mok.Membership;
+using Mok.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Mok.Membership;
-using Mok.Web.Models;
 using System.Threading.Tasks;
 
 namespace Mok.Web.Api

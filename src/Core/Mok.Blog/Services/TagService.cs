@@ -1,13 +1,13 @@
-﻿using MediatR;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
-using Mok.Blog.Data;
+﻿using Mok.Blog.Data;
 using Mok.Blog.Events;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
 using Mok.Blog.Services.Interfaces;
 using Mok.Exceptions;
 using Mok.Helpers;
+using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,20 +20,23 @@ namespace Mok.Blog.Services
     /// Unit tests for <see cref="TagService"/>.
     /// </summary>
     public class TagService : ITagService,
-                               INotificationHandler<BlogPostBeforeCreate>
+                              INotificationHandler<BlogPostBeforeCreate>,
+                              INotificationHandler<BlogPostBeforeUpdate>
     {
         private readonly ITagRepository tagRepository;
         private readonly IDistributedCache cache;
         private readonly ILogger<TagService> logger;
 
         public TagService(ITagRepository tagRepository,
-                          IDistributedCache cache,
-                          ILogger<TagService> logger)
+            IDistributedCache cache,
+            ILogger<TagService> logger)
         {
             this.tagRepository = tagRepository;
             this.cache = cache;
             this.logger = logger;
         }
+
+        // -------------------------------------------------------------------- const
 
         /// <summary>
         /// The max allowed length of a tag title is 24 chars.
@@ -45,9 +48,78 @@ namespace Mok.Blog.Services
         /// </summary>
         public const int SLUG_MAXLEN = 24;
 
+        // -------------------------------------------------------------------- public methods
+
+        /// <summary>
+        /// Returns tag by id, throws <see cref="MokException"/> if tag with id is not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<Tag> GetAsync(int id)
+        {
+            var tags = await GetAllAsync();
+            var tag = tags.SingleOrDefault(c => c.Id == id);
+            if (tag == null)
+            {
+                throw new MokException(EExceptionType.ResourceNotFound,
+                    $"Tag with id {id} is not found.");
+            }
+
+            return tag;
+        }
+
+        /// <summary>
+        /// Returns tag by slug, throws <see cref="MokException"/> if tag with slug is not found.
+        /// </summary>
+        /// <param name="slug">Tag slug.</param>
+        /// <returns></returns>
+        public async Task<Tag> GetBySlugAsync(string slug)
+        {
+            if (slug.IsNullOrEmpty())
+                throw new MokException(EExceptionType.ResourceNotFound, "Tag does not exist.");
+
+            var tags = await GetAllAsync();
+            var tag = tags.SingleOrDefault(c => c.Slug.Equals(slug, StringComparison.CurrentCultureIgnoreCase));
+            if (tag == null)
+            {
+                throw new MokException(EExceptionType.ResourceNotFound, $"Tag '{slug}' does not exist.");
+            }
+
+            return tag;
+        }
+
+        /// <summary>
+        /// Returns tag by title, throws <see cref="MokException"/> if tag with title is not found.
+        /// </summary>
+        /// <param name="title">Tag title.</param>
+        /// <returns></returns>
+        public async Task<Tag> GetByTitleAsync(string title)
+        {
+            if (title.IsNullOrEmpty()) throw new MokException("Tag does not exist.");
+
+            var tags = await GetAllAsync();
+            var tag = tags.SingleOrDefault(c => c.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase));
+            if (tag == null)
+            {
+                throw new MokException($"Tag with title '{title}' does not exist.");
+            }
+
+            return tag;
+        }
+
         /// <summary>
         /// Returns all tags, cached after calls to DAL.
         /// </summary>
+        /// <returns></returns>
+        /// <remarks>
+        /// This method must return all tags as <see cref="PrepPostAsync(BlogPost, ECreateOrUpdate)"/>
+        /// depends on entire tags. If any filtering needs to be done for presentation purpose, then
+        /// it must be done in presentation layer.
+        /// 
+        /// TODO: currently create and update post depend on all tags instead for querying each tag 
+        /// individually to db each time, this saves some db round trip. however there is fine line
+        /// for how large the number of tags grow, in which case we need a better strategy.
+        /// </remarks>
         public async Task<List<Tag>> GetAllAsync()
         {
             return await cache.GetAsync(BlogCache.KEY_ALL_TAGS, BlogCache.Time_AllTags, async () => {
@@ -88,6 +160,7 @@ namespace Mok.Blog.Services
 
             // remove cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
 
             logger.LogDebug("Created {@Tag}", tag);
             return tag;
@@ -129,6 +202,7 @@ namespace Mok.Blog.Services
 
             // remove cache
             await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
 
             // return entity
             logger.LogDebug("Updated {@Tag}", entity);
@@ -144,57 +218,10 @@ namespace Mok.Blog.Services
         {
             await tagRepository.DeleteAsync(id);
             await cache.RemoveAsync(BlogCache.KEY_ALL_TAGS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
         }
 
-        /// <summary>
-        /// Returns tag by id, throws <see cref="MokException"/> if tag with id is not found.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public async Task<Tag> GetAsync(int id)
-        {
-            var tags = await GetAllAsync();
-            var tag = tags.SingleOrDefault(c => c.Id == id);
-            if (tag == null)
-            {
-                throw new MokException(EExceptionType.ResourceNotFound,
-                    $"Tag with id {id} is not found.");
-            }
-
-            return tag;
-        }
-
-        /// <summary>
-        /// Returns tag by slug, throws <see cref="MokException"/> if tag with slug is not found.
-        /// </summary>
-        /// <param name="slug">Tag slug.</param>
-        /// <returns></returns>
-        public async Task<Tag> GetBySlugAsync(string slug)
-        {
-            if (slug.IsNullOrEmpty())
-                throw new MokException(EExceptionType.ResourceNotFound, "Tag does not exist.");
-
-            var tags = await GetAllAsync();
-            var tag = tags.SingleOrDefault(c => c.Slug.Equals(slug, StringComparison.CurrentCultureIgnoreCase));
-            if (tag == null)
-            {
-                throw new MokException(EExceptionType.ResourceNotFound, $"Tag '{slug}' does not exist.");
-            }
-
-            return tag;
-        }
-
-        /// <summary>
-        /// Cleans tag title from any html and shortens it if exceed max allow length.
-        /// </summary>
-        /// <param name="title"></param>
-        /// <returns></returns>
-        private string PrepareTitle(string title)
-        {
-            title = Util.CleanHtml(title);
-            title = title.Length > TITLE_MAXLEN ? title.Substring(0, TITLE_MAXLEN) : title;
-            return title;
-        }
+        // -------------------------------------------------------------------- event handlers
 
         /// <summary>
         /// Handles the <see cref="BlogPostBeforeCreate"/> event by creating any new tags.
@@ -220,6 +247,47 @@ namespace Mok.Blog.Services
                     tag = await CreateAsync(new Tag { Title = title });
                 }
             }
+        }
+
+        /// <summary>
+        /// Handles the <see cref="BlogPostBeforeUpdate"/> event by creating any new tags.
+        /// </summary>
+        /// <param name="notification"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task Handle(BlogPostBeforeUpdate notification, CancellationToken cancellationToken)
+        {
+            if (notification.TagTitles == null || notification.TagTitles.Count <= 0 || notification.PostTags == null) return;
+
+            // get tags that are not among current tags
+            var currentTitles = notification.PostTags.Select(pt => pt.Tag.Title);
+            var distinctTitles = notification.TagTitles.Except(currentTitles);
+            var allTags = await GetAllAsync();
+
+            // create any new tags
+            foreach (var title in distinctTitles)
+            {
+                // make sure the incoming title does not already exist
+                var tag = allTags.FirstOrDefault(t => t.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase));
+                if (tag == null)
+                {
+                    tag = await CreateAsync(new Tag { Title = title });
+                }
+            }
+        }
+
+        // -------------------------------------------------------------------- private methods
+
+        /// <summary>
+        /// Cleans tag title from any html and shortens it if exceed max allow length.
+        /// </summary>
+        /// <param name="title"></param>
+        /// <returns></returns>
+        private string PrepareTitle(string title)
+        {
+            title = Util.CleanHtml(title);
+            title = title.Length > TITLE_MAXLEN ? title.Substring(0, TITLE_MAXLEN) : title;
+            return title;
         }
     }
 }

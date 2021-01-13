@@ -1,5 +1,6 @@
 ﻿using Mok.Data;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Mok.Medias
 {
@@ -20,5 +21,14 @@ namespace Mok.Medias
         /// <param name="month"></param>
         /// <returns></returns>
         Task<Media> GetAsync(string fileName, int year, int month);
+
+        /// <summary>
+        /// Returns a list of <see cref="Media"/> based on media type page number and page size, 
+        /// or empty list if no records found; and total count of medias for this media type.
+        /// </summary>
+        /// <param name="mediaType"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        Task<(List<Media> medias, int count)> GetMediasAsync(EMediaType mediaType, int pageNumber, int pageSize);
     }
 }

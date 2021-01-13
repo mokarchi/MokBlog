@@ -25,18 +25,19 @@ namespace Mok.Blog.Data
         /// </summary>
         public async Task<List<Tag>> GetListAsync()
         {
-            return await _entities.Select(
-                t => new Tag
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Slug = t.Slug,
-                    Description = t.Description,
-                    Count = (from p in _db.Set<Post>()
-                             from pt in p.PostTags
-                             where pt.TagId == t.Id && p.Status == EPostStatus.Published
-                             select pt).Count(),
-                }).OrderByDescending(t => t.Count).ThenBy(t => t.Title).ToListAsync();
+            return await (from t in _entities
+                          select new Tag
+                          {
+                              Id = t.Id,
+                              Title = t.Title,
+                              Slug = t.Slug,
+                              Color = t.Color,
+                              Description = t.Description,
+                              Count = (from p in _db.Set<Post>()
+                                       from pt in p.PostTags
+                                       where pt.TagId == t.Id && p.Status == EPostStatus.Published
+                                       select pt).Count(),
+                          }).OrderByDescending(t => t.Count).ThenBy(t => t.Title).ToListAsync();
         }
     }
 }

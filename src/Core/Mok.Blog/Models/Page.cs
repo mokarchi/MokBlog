@@ -3,6 +3,13 @@ using System.Collections.Generic;
 
 namespace Mok.Blog.Models
 {
+    /// <summary>
+    /// Represents a page on the website.
+    /// </summary>
+    /// <remarks>
+    /// Pages are hierarchical, I limit the hierarchy to 2 levels,
+    /// thus each page is either a parent or a child page.
+    /// </remarks>
     public class Page : Post, IHierarchical<Page>
     {
         public Page()

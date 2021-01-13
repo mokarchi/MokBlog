@@ -1,14 +1,15 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Mok.Navigation;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
-using Mok.Navigation;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Mok.Blog.Helpers
 {
     public static class BlogRoutes
     {
+        #region Client URLs
+
         private const string PAGE_PARENT_RELATIVE_URL = "{0}";
         private const string PAGE_PARENT_CHILD_RELATIVE_URL = "{0}/{1}";
         private const string PAGE_EDIT_URL = "admin/compose/page/{0}";
@@ -25,6 +26,88 @@ namespace Mok.Blog.Helpers
         private const string CATEGORY_RSS_URL = "blog/{0}/feed";
         private const string TAG_URL = "posts/tagged/{0}";
         private const string ARCHIVE_URL = "posts/{0}/{1}";
+
+        /// <summary>
+        /// Returns a page's relative link that starts with "/" and contains one or two slugs.
+        /// </summary>
+        /// <param name="slugs"></param>
+        /// <returns></returns>
+        public static string GetPageRelativeLink(params string[] slugs)
+        {
+            return slugs.Length <= 1 || slugs[1].IsNullOrEmpty() ?
+                string.Format("/" + PAGE_PARENT_RELATIVE_URL, slugs[0]) :
+                string.Format("/" + PAGE_PARENT_CHILD_RELATIVE_URL, slugs[0], slugs[1]);
+        }
+
+        /// <summary>
+        /// Returns a page's edit link, the returned string is a relative URL that starts with "/".
+        /// </summary>
+        /// <param name="pageId"></param>
+        /// <returns></returns>
+        public static string GetPageEditLink(int pageId)
+        {
+            return string.Format("/" + PAGE_EDIT_URL, pageId);
+        }
+
+        public static string GetPageNavEditLink(int pageId)
+        {
+            return string.Format("/" + PAGE_EDIT_NAV_URL, pageId);
+        }
+
+        /// <summary>
+        /// Returns a page's preview relative link that starts with "/".
+        /// </summary>
+        /// <param name="slugs"></param>
+        /// <returns></returns>
+        public static string GetPagePreviewRelativeLink(params string[] slugs)
+        {
+            return slugs.Length <= 1 || slugs[1].IsNullOrEmpty() ?
+                string.Format("/" + PREVIEW_PARENT_RELATIVE_URL, slugs[0]) :
+                string.Format("/" + PREVIEW_PARENT_CHILD_RELATIVE_URL, slugs[0], slugs[1]);
+        }
+
+        /// <summary>
+        /// Returns a blog post's relative link that starts with "/" and contains 2-digit month and day.
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        public static string GetPostRelativeLink(DateTimeOffset dt, string slug)
+        {
+            return string.Format("/" + POST_RELATIVE_URL, dt.Year, dt.Month.ToString("00"), dt.Day.ToString("00"), slug);
+        }
+
+        /// <summary>
+        /// Returns a blog post's preview relative link that starts with "/".
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        public static string GetPostPreviewRelativeLink(DateTimeOffset dt, string slug)
+        {
+            return string.Format("/" + PREVIEW_POST_RELATIVE_URL, dt.Year, dt.Month.ToString("00"), dt.Day.ToString("00"), slug);
+        }
+
+        /// <summary>
+        /// Returns a blog post's permalink, the returned string is a relative URL that starts with "/".
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <returns></returns>
+        public static string GetPostPermalink(int postId)
+        {
+            return string.Format("/" + POST_PERMA_URL, postId);
+        }
+
+        /// <summary>
+        /// Returns a blog post's edit link, the returned string is a relative URL that starts with "/".
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <returns></returns>
+        public static string GetPostEditLink(int postId)
+        {
+            return string.Format("/" + POST_EDIT_URL, postId);
+        }
+
         /// <summary>
         /// Returns a blog category's relative link that start with "/".
         /// </summary>
@@ -54,6 +137,30 @@ namespace Mok.Blog.Helpers
         {
             return string.Format("/" + TAG_URL, slug);
         }
+
+        /// <summary>
+        /// Returns a blog archive's relative link that starts with "/" and contains 2-digit month.
+        /// </summary>
+        /// <param name="year"></param>
+        /// <param name="month"></param>
+        /// <returns></returns>
+        public static string GetArchiveRelativeLink(int year, int month)
+        {
+            return string.Format("/" + ARCHIVE_URL, year, month.ToString("00"));
+        }
+
+        #endregion
+
+        #region Admin URLs
+
+        private const string ADD_CHILD_PAGE = "/admin/compose/page?parentId={0}";
+
+        public static string GetAddChildPageLink(int parentId)
+        {
+            return string.Format(ADD_CHILD_PAGE, parentId);
+        }
+
+        #endregion
 
         /// <summary>
         /// Registers the blog app's routes.

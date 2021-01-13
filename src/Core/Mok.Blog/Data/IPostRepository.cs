@@ -3,7 +3,6 @@ using Mok.Blog.Models;
 using Mok.Data;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Mok.Blog.Data
@@ -36,11 +35,12 @@ namespace Mok.Blog.Data
         Task UpdateAsync(Post post, string categoryTitle, IEnumerable<string> tagTitles);
 
         /// <summary>
-        /// Returns a list of posts and total post count by query or empty list if no posts found.
+        /// Increases post view count.
         /// </summary>
-        /// <param name="query"></param>
+        /// <param name="id"></param>
+        /// <param name="count"></param>
         /// <returns></returns>
-        Task<(IList<Post> posts, int totalCount)> GetListAsync(PostListQuery query);
+        Task IncViewCountAsync(int id, int count);
 
         /// <summary>
         /// Returns a <see cref="Post"/> by id. If it is a BlogPost it'll return together with its 
@@ -54,5 +54,24 @@ namespace Mok.Blog.Data
         /// Returns a <see cref="EPostStatus.Published"/> <see cref="Post"/>, returns null if it's not found.
         /// </summary>
         Task<Post> GetAsync(string slug, int year, int month, int day);
+
+        /// <summary>
+        /// Returns a list of posts and total post count by query or empty list if no posts found.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        Task<(IList<Post> posts, int totalCount)> GetListAsync(PostListQuery query);
+
+        /// <summary>
+        /// Returns CreatedOn of all published blog posts, used for archives.
+        /// </summary>
+        /// <returns></returns>
+        Task<IEnumerable<DateTime>> GetPostDateTimesAsync();
+
+        /// <summary>
+        /// Returns total number of posts by each <see cref="EPostStatus"/>.
+        /// </summary>
+        /// <returns></returns>
+        Task<PostCount> GetPostCountAsync();
     }
 }

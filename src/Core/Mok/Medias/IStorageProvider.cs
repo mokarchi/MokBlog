@@ -1,4 +1,7 @@
-﻿namespace Mok.Medias
+﻿using System.IO;
+using System.Threading.Tasks;
+
+namespace Mok.Medias
 {
     /// <summary>
     /// The storage provider save the incoming file whether its byte[] or stream into the storage.
@@ -10,5 +13,20 @@
         /// The absolute URI endpoint to resource.
         /// </summary>
         string StorageEndpoint { get; }
+
+        /// <summary>
+        /// Saves file to storage.
+        /// </summary>
+        Task SaveFileAsync(Stream source, string fileName, string path, char pathSeparator);
+        Task SaveFileAsync(byte[] source, string fileName, string path, char pathSeparator);
+
+        /// <summary>
+        /// Deletes a file from storage.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="path"></param>
+        /// <param name="pathSeparator"></param>
+        /// <returns></returns>
+        Task DeleteFileAsync(string fileName, string path, char pathSeparator);
     }
 }

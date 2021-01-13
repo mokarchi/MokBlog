@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Mok.Data;
+﻿using Mok.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -31,6 +32,21 @@ namespace Mok.Medias
                         m.FileName == fileName &&
                         m.UploadedOn.Year == year &&
                         m.UploadedOn.Month == month);
+        }
+
+        public async Task<(List<Media> medias, int count)> GetMediasAsync(EMediaType mediaType, int pageNumber, int pageSize)
+        {
+            int skip = (pageNumber - 1) * pageSize;
+            int take = pageSize;
+
+            var q = _entities.Where(m => m.MediaType == mediaType);
+            var medias = await q.OrderByDescending(m => m.UploadedOn)
+                                .Skip(skip)
+                                .Take(take)
+                                .ToListAsync();
+            var count = await q.CountAsync();
+
+            return (medias, count);
         }
     }
 }

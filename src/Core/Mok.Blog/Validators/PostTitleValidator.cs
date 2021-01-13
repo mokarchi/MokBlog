@@ -1,6 +1,6 @@
-﻿using FluentValidation;
-using Mok.Blog.Enums;
+﻿using Mok.Blog.Enums;
 using Mok.Blog.Models;
+using FluentValidation;
 
 namespace Mok.Blog.Validators
 {

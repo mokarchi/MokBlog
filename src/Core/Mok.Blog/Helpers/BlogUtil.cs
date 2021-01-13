@@ -1,17 +1,19 @@
-﻿using AutoMapper;
-using Mok.Blog.Models;
+﻿using Mok.Blog.Models;
 using Mok.Helpers;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Mok.Blog.Helpers
 {
     public class BlogUtil
     {
         /// <summary>
-        /// Returns a valid slug
+        /// Returns a valid slug for a category or tag.
         /// </summary>
+        /// <param name="title">Category or tag's title.</param>
+        /// <param name="maxlen">The max length input is allowed.</param>
+        /// <param name="existingSlugs"></param>
         /// <remarks>
         /// This method makes sure the result slug
         /// - not to exceed max len;
@@ -47,6 +49,8 @@ namespace Mok.Blog.Helpers
                 {
                     cfg.CreateMap<Post, BlogPost>();
                     cfg.CreateMap<BlogPost, Post>();
+                    cfg.CreateMap<Post, Page>();
+                    cfg.CreateMap<Page, Post>();
                 }).CreateMapper();
             }
         }

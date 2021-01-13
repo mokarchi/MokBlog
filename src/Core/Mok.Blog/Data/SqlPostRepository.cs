@@ -1,11 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Mok.Blog.Enums;
+﻿using Mok.Blog.Enums;
 using Mok.Blog.Models;
 using Mok.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Mok.Blog.Data
@@ -59,7 +58,6 @@ namespace Mok.Blog.Data
                     post.PostTags.Add(new PostTag { Post = post, Tag = tag });
                 }
             }
-
             await _entities.AddAsync(post);
             await _db.SaveChangesAsync();
             return post;
@@ -105,6 +103,80 @@ namespace Mok.Blog.Data
 
             await _db.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// Deletes a <see cref="Post"/> by Id, if the post is a parent page, 
+        /// it will also delete all child pages.
+        /// </summary>
+        public new async Task DeleteAsync(int id)
+        {
+            // throws if id not found or not unique
+            var post = await _entities.SingleAsync(c => c.Id == id);
+
+            // if blog post or child page
+            if (post.Type == EPostType.BlogPost || (post.ParentId.HasValue && post.ParentId > 0))
+            {
+                _db.Remove(post);
+            }
+            else // parent page which may have children
+            {
+                var posts = _entities.Where(p => p.ParentId == id).ToArray();
+                Array.Resize(ref posts, posts.Length + 1); // put the parent itself in
+                posts[posts.Length - 1] = post;
+
+                _db.RemoveRange(posts);
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Increases post view count.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public async Task IncViewCountAsync(int id, int count)
+        {
+            var post = await _entities.SingleOrDefaultAsync(p => p.Id == id);
+            post.ViewCount += count;
+            await _db.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Returns a <see cref="Post"/> by id. If it is a BlogPost it'll return together with its 
+        /// <see cref="Category"/> and <see cref="Tag"/>. Returns null if it's not found.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="type">If it's BlogPost it'll return category and tags with it.</param>
+        public async Task<Post> GetAsync(int id, EPostType type)
+        {
+            return (type == EPostType.BlogPost) ?
+                await _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag).SingleOrDefaultAsync(p => p.Id == id) :
+                await _entities.Include(p => p.User).SingleOrDefaultAsync(p => p.Id == id);
+        }
+
+        /// <summary>
+        /// Returns a <see cref="EPostStatus.Published"/> <see cref="Post"/>, returns null if it's not found.
+        /// </summary>
+        public async Task<Post> GetAsync(string slug, int year, int month, int day) =>
+            isSqlite ?
+                 _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag).ToList()
+                                   .SingleOrDefault(p =>
+                                     p.Type == EPostType.BlogPost &&
+                                     p.Status == EPostStatus.Published &&
+                                     p.Slug.ToUpper() == slug.ToUpper() &&
+                                     p.CreatedOn.Year == year &&
+                                     p.CreatedOn.Month == month &&
+                                     p.CreatedOn.Day == day) :
+                 await _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag)
+                               .SingleOrDefaultAsync(p =>
+                                 p.Type == EPostType.BlogPost &&
+                                 p.Status == EPostStatus.Published &&
+                                 p.Slug.ToUpper() == slug.ToUpper() &&
+                                 p.CreatedOn.Year == year &&
+                                 p.CreatedOn.Month == month &&
+                                 p.CreatedOn.Day == day);
 
         /// <summary>
         /// Returns a list of posts and total post count by query or empty list if no posts found.
@@ -172,39 +244,24 @@ namespace Mok.Blog.Data
         }
 
         /// <summary>
-        /// Returns a <see cref="Post"/> by id. If it is a BlogPost it'll return together with its 
-        /// <see cref="Category"/> and <see cref="Tag"/>. Returns null if it's not found.
+        /// Returns CreatedOn of all published blog posts, used for archives.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="type">If it's BlogPost it'll return category and tags with it.</param>
-        public async Task<Post> GetAsync(int id, EPostType type)
+        /// <returns></returns>
+        public async Task<IEnumerable<DateTime>> GetPostDateTimesAsync()
         {
-            return (type == EPostType.BlogPost) ?
-                await _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag).SingleOrDefaultAsync(p => p.Id == id) :
-                await _entities.Include(p => p.User).SingleOrDefaultAsync(p => p.Id == id);
+            return await _entities.Where(p => p.Status == EPostStatus.Published && p.Type == EPostType.BlogPost)
+                .OrderByDescending(p => p.CreatedOn)
+                .Select(p => new DateTime(p.CreatedOn.Year, p.CreatedOn.Month, 1))
+                .ToListAsync();
         }
 
         /// <summary>
-        /// Returns a <see cref="EPostStatus.Published"/> <see cref="Post"/>, returns null if it's not found.
+        /// Returns total number of posts by each <see cref="EPostStatus"/>.
         /// </summary>
-        public async Task<Post> GetAsync(string slug, int year, int month, int day) =>
-            isSqlite ?
-                 _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag).ToList()
-                                   .SingleOrDefault(p =>
-                                     p.Type == EPostType.BlogPost &&
-                                     p.Status == EPostStatus.Published &&
-                                     p.Slug.ToUpper() == slug.ToUpper() &&
-                                     p.CreatedOn.Year == year &&
-                                     p.CreatedOn.Month == month &&
-                                     p.CreatedOn.Day == day) :
-                 await _entities.Include(p => p.User).Include(p => p.Category).Include(p => p.PostTags).ThenInclude(p => p.Tag)
-                               .SingleOrDefaultAsync(p =>
-                                 p.Type == EPostType.BlogPost &&
-                                 p.Status == EPostStatus.Published &&
-                                 p.Slug.ToUpper() == slug.ToUpper() &&
-                                 p.CreatedOn.Year == year &&
-                                 p.CreatedOn.Month == month &&
-                                 p.CreatedOn.Day == day);
-
+        public async Task<PostCount> GetPostCountAsync() => new PostCount
+        {
+            Published = await _entities.Where(p => p.Status == EPostStatus.Published && p.Type == EPostType.BlogPost).CountAsync(),
+            Draft = await _entities.Where(p => p.Status == EPostStatus.Draft && p.Type == EPostType.BlogPost).CountAsync()
+        };
     }
 }

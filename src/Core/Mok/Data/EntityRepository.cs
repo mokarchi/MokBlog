@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Mok.Exceptions;
+﻿using Mok.Exceptions;
 using MokCore.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +13,10 @@ namespace Mok.Data
     /// EF implementation of a base repository for commonly used data access methods.
     /// </summary>
     /// <typeparam name="T">It is a sub type of <see cref="Entity"/> which provides an int based PK.</typeparam>
+    /// <remarks>
+    /// The sub class will have its specific methods, for example SqlCategoryRepository and SqlTagRepository
+    /// has a GetListAsync() which does their specific join.
+    /// </remarks>
     public class EntityRepository<T> : IRepository<T> where T : Entity
     {
         /// <summary>
@@ -83,6 +87,10 @@ namespace Mok.Data
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
+        /// <remarks>
+        /// Suitable when predicate is very simple and short.  If you take a look at 
+        /// SqlTagRepository GetListAsync() that is not suitable for this.
+        /// </remarks>
         public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate) =>
             isSqlite ?
                 _entities.ToList().Where(predicate.Compile()).ToList():

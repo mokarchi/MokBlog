@@ -20,6 +20,25 @@ namespace Mok.Exceptions
         }
 
         /// <summary>
+        /// Thrown with a message.
+        /// </summary>
+        /// <param name="message"></param>
+        public MokException(string message)
+            : base(message)
+        {
+        }
+
+        /// <summary>
+        /// Thrown with a message and an exception.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="inner"></param>
+        public MokException(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
+
+        /// <summary>
         /// Thrown when <see cref="ValidationResult.IsValid"/> is false. 
         /// </summary>
         /// <param name="message">Summary of what's happening</param>
@@ -32,31 +51,22 @@ namespace Mok.Exceptions
         }
 
         /// <summary>
+        /// Thrown with a <see cref="EExceptionType"/>.
+        /// </summary>
+        /// <param name="exceptionType"></param>
+        public MokException(EExceptionType exceptionType, string message = "")
+            : base(message)
+        {
+            ExceptionType = exceptionType;
+        }
+
+        /// <summary>
         /// Thrown with a <see cref="EExceptionType"/> and inner exception.
         /// </summary>
         /// <param name="exceptionType"></param>
         /// <param name="inner"></param>
         public MokException(EExceptionType exceptionType, Exception inner)
             : base("", inner)
-        {
-            ExceptionType = exceptionType;
-        }
-
-        /// <summary>
-        /// Thrown with a message.
-        /// </summary>
-        /// <param name="message"></param>
-        public MokException(string message)
-            : base(message)
-        {
-        }
-
-        /// <summary>
-        /// Thrown with a <see cref="EExceptionType"/>.
-        /// </summary>
-        /// <param name="exceptionType"></param>
-        public MokException(EExceptionType exceptionType, string message = "")
-            : base(message)
         {
             ExceptionType = exceptionType;
         }

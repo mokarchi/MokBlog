@@ -1,9 +1,4 @@
-﻿using AutoMapper;
-using Markdig;
-using MediatR;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
-using Mok.Blog.Data;
+﻿using Mok.Blog.Data;
 using Mok.Blog.Enums;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
@@ -13,7 +8,11 @@ using Mok.Exceptions;
 using Mok.Helpers;
 using Mok.Navigation;
 using Mok.Settings;
-using system;
+using AutoMapper;
+using Markdig;
+using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,6 +47,8 @@ namespace Mok.Blog.Services
             this.mediator = mediator;
         }
 
+        // -------------------------------------------------------------------- consts
+
         public const string DUPLICATE_TITLE_MSG = "A page with same title exists, please choose a different one.";
         public const string DUPLICATE_SLUG_MSG = "Page slug generated from your title conflicts with another page, please choose a different title.";
         public const string RESERVED_SLUG_MSG = "Page title conflicts with reserved URL '{0}', please choose a different one.";
@@ -80,6 +81,8 @@ namespace Mok.Blog.Services
         /// The regex is from https://stackoverflow.com/q/26856867/32240 
         /// </remarks>
         public const string DOUBLE_BRACKETS = @"\[.*?\]]";
+
+        // -------------------------------------------------------------------- public methods
 
         /// <summary>
         /// Creates a <see cref="Page"/>.

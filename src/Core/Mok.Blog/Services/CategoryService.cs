@@ -1,7 +1,4 @@
-﻿using MediatR;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
-using Mok.Blog.Data;
+﻿using Mok.Blog.Data;
 using Mok.Blog.Events;
 using Mok.Blog.Helpers;
 using Mok.Blog.Models;
@@ -10,6 +7,9 @@ using Mok.Exceptions;
 using Mok.Helpers;
 using Mok.Navigation;
 using Mok.Settings;
+using MediatR;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,8 +26,9 @@ namespace Mok.Blog.Services
         private readonly ICategoryRepository categoryRepository;
         private readonly ISettingService settingService;
         private readonly IMediator mediator;
-        private readonly ILogger<CategoryService> logger;
         private readonly IDistributedCache cache;
+        private readonly ILogger<CategoryService> logger;
+
         public CategoryService(ICategoryRepository categoryRepository,
                                ISettingService settingService,
                                IMediator mediator,
@@ -41,6 +42,8 @@ namespace Mok.Blog.Services
             this.logger = logger;
         }
 
+        // -------------------------------------------------------------------- const
+
         /// <summary>
         /// The max allowed length of a category title is 24 chars.
         /// </summary>
@@ -51,20 +54,13 @@ namespace Mok.Blog.Services
         /// </summary>
         public const int SLUG_MAXLEN = 24;
 
-        /// <summary>
-        /// Returns all categories, cached after calls to DAL.
-        /// </summary>
-        public async Task<List<Category>> GetAllAsync()
-        {
-            return await cache.GetAsync(BlogCache.KEY_ALL_CATS, BlogCache.Time_AllCats, async () =>
-            {
-                return await categoryRepository.GetListAsync();
-            });
-        }
+        // -------------------------------------------------------------------- public methods
 
         /// <summary>
         /// Returns category by id, throws <see cref="MokException"/> if category with id is not found.
         /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<Category> GetAsync(int id)
         {
             var cats = await GetAllAsync();
@@ -81,6 +77,8 @@ namespace Mok.Blog.Services
         /// <summary>
         /// Returns category by slug, throws <see cref="MokException"/> if category with slug is null or not found.
         /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
         public async Task<Category> GetAsync(string slug)
         {
             if (slug.IsNullOrEmpty())
@@ -97,8 +95,40 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
+        /// Returns all categories, cached after calls to DAL.
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>
+        /// This method must return all categories as <see cref="PrepPostAsync(BlogPost, ECreateOrUpdate)"/>
+        /// depends on entire tags. If any filtering needs to be done for presentation purpose, then
+        /// it must be done in presentation layer.
+        /// </remarks>
+        public async Task<List<Category>> GetAllAsync()
+        {
+            return await cache.GetAsync(BlogCache.KEY_ALL_CATS, BlogCache.Time_AllCats, async () => {
+                return await categoryRepository.GetListAsync();
+            });
+        }
+
+        /// <summary>
+        /// Sets the id to default category.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task SetDefaultAsync(int id)
+        {
+            await settingService.UpsertSettingsAsync(new BlogSettings
+            {
+                DefaultCategoryId = id,
+            });
+        }
+
+        /// <summary>
         /// Creates a new <see cref="Category"/>.
         /// </summary>
+        /// <param name="category">The category with data to be created.</param>
+        /// <exception cref="MokException">If title is empty or exists already.</exception>
+        /// <returns>Created category.</returns>
         public async Task<Category> CreateAsync(string title, string description = null)
         {
             if (title.IsNullOrEmpty())
@@ -106,21 +136,23 @@ namespace Mok.Blog.Services
                 throw new MokException($"Category title cannot be empty.");
             }
 
+            // prep title
             title = PrepareTitle(title);
 
             // make sure unique
             var allCats = await GetAllAsync();
-            if(allCats.Any(t => t.Title.Equals(title,StringComparison.CurrentCultureIgnoreCase)))
+            if (allCats.Any(t => t.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase)))
             {
                 throw new MokException($"'{title}' already exists.");
             }
 
+            // prep slug, desc and count
             var category = new Category
             {
                 Title = title,
                 Slug = BlogUtil.SlugifyTaxonomy(title, SLUG_MAXLEN, allCats.Select(c => c.Slug)),
                 Description = Util.CleanHtml(description),
-                Count = 0
+                Count = 0,
             };
 
             // create
@@ -135,58 +167,37 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
-        /// Deletes a <see cref="Category"/> and reassigns posts to a default category, and 
-        /// invalidates caceh for all categories.  Throws <see cref="MokException"/> if the
-        /// category being deleted is the default category.
-        /// </summary>
-        public async Task DeleteAsync(int id)
-        {
-            var blogSettings = await settingService.GetSettingsAsync<BlogSettings>();
-
-            // on the UI there is no delete button on the default cat
-            // therefore when there is only one category left, it'll be the default.
-            if (id == blogSettings.DefaultCategoryId)
-            {
-                throw new MokException("Default category cannot be deleted.");
-            }
-
-            // delete
-            await categoryRepository.DeleteAsync(id, 1);
-
-            // invalidate cache
-            await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
-            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
-
-            // raise nav deleted event
-            await mediator.Publish(new NavDeleted { Id = id, Type = ENavType.BlogCategory });
-        }
-
-        /// <summary>
         /// Updates an existing <see cref="Category"/>.
         /// </summary>
+        /// <param name="category">The category with data to be updated.</param>
+        /// <exception cref="MokException">If category is invalid or title exists.</exception>
+        /// <returns>Updated category.</returns>
         public async Task<Category> UpdateAsync(Category category)
         {
-            if(category == null || category.Id <=0 || category.Title.IsNullOrEmpty())
+            if (category == null || category.Id <= 0 || category.Title.IsNullOrEmpty())
             {
                 throw new MokException($"Invalid category to update.");
             }
 
+            // prep title
             category.Title = PrepareTitle(category.Title);
 
             // make sure it is unique
             var allCats = await GetAllAsync();
-            allCats.RemoveAll(c => c.Id == category.Id);
+            allCats.RemoveAll(c => c.Id == category.Id); // remove selft
             if (allCats.Any(c => c.Title.Equals(category.Title, StringComparison.CurrentCultureIgnoreCase)))
             {
                 throw new MokException($"'{category.Title}' already exists.");
             }
 
+            // prep slug, description and count
             var entity = await categoryRepository.GetAsync(category.Id);
-            entity.Title = category.Title;
-            entity.Slug = BlogUtil.SlugifyTaxonomy(category.Title, SLUG_MAXLEN, allCats.Select(c => c.Slug));
+            entity.Title = category.Title; // assign new title
+            entity.Slug = BlogUtil.SlugifyTaxonomy(category.Title, SLUG_MAXLEN, allCats.Select(c => c.Slug)); // slug is based on title
             entity.Description = Util.CleanHtml(category.Description);
             entity.Count = category.Count;
 
+            // update
             await categoryRepository.UpdateAsync(category);
 
             // remove cache
@@ -202,24 +213,37 @@ namespace Mok.Blog.Services
         }
 
         /// <summary>
-        /// Sets the id to default category.
+        /// Deletes a <see cref="Category"/> and reassigns posts to a default category, and 
+        /// invalidates caceh for all categories.  Throws <see cref="MokException"/> if the
+        /// category being deleted is the default category.
         /// </summary>
-        public async Task SetDefaultAsync(int id)
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// The default category cannot be deleted, on the UI there is no delete button available
+        /// for default category, thus when there is only one category left, it'll be the default,
+        /// and you'll always have it available.
+        /// </remarks>
+        public async Task DeleteAsync(int id)
         {
-            await settingService.UpsertSettingsAsync(new BlogSettings
-            {
-                DefaultCategoryId = id,
-            });
-        }
+            var blogSettings = await settingService.GetSettingsAsync<BlogSettings>();
 
-        /// <summary>
-        /// Cleans category title from any html and shortens it if exceed max allow length.
-        /// </summary>
-        private string PrepareTitle(string title)
-        {
-            title = Util.CleanHtml(title);
-            title = title.Length > TITLE_MAXLEN ? title.Substring(0, TITLE_MAXLEN) : title;
-            return title;
+            // on the UI there is no delete button on the default cat
+            // therefore when there is only one category left, it'll be the default.
+            if (id == blogSettings.DefaultCategoryId)
+            {
+                throw new MokException("Default category cannot be deleted.");
+            }
+
+            // delete
+            await categoryRepository.DeleteAsync(id, blogSettings.DefaultCategoryId);
+
+            // invalidate cache
+            await cache.RemoveAsync(BlogCache.KEY_ALL_CATS);
+            await cache.RemoveAsync(BlogCache.KEY_POSTS_INDEX);
+
+            // raise nav deleted event
+            await mediator.Publish(new NavDeleted { Id = id, Type = ENavType.BlogCategory });
         }
 
         public bool CanProvideNav(ENavType type) => type == ENavType.BlogCategory;
@@ -229,6 +253,8 @@ namespace Mok.Blog.Services
             var cat = await GetAsync(id);
             return BlogRoutes.GetCategoryRelativeLink(cat.Slug);
         }
+
+        // -------------------------------------------------------------------- event handlers
 
         /// <summary>
         /// Handles the <see cref="BlogPostBeforeCreate"/> event by creating a new category 
@@ -274,6 +300,20 @@ namespace Mok.Blog.Services
             // create if not exist
             if (cat == null)
                 await CreateAsync(categoryTitle);
+        }
+
+        // -------------------------------------------------------------------- private methods
+
+        /// <summary>
+        /// Cleans category title from any html and shortens it if exceed max allow length.
+        /// </summary>
+        /// <param name="title"></param>
+        /// <returns></returns>
+        private string PrepareTitle(string title)
+        {
+            title = Util.CleanHtml(title);
+            title = title.Length > TITLE_MAXLEN ? title.Substring(0, TITLE_MAXLEN) : title;
+            return title;
         }
     }
 }

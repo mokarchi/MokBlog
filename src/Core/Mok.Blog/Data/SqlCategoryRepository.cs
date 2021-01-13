@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Mok.Blog.Enums;
+﻿using Mok.Blog.Enums;
 using Mok.Blog.Models;
 using Mok.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,9 +17,40 @@ namespace Mok.Blog.Data
     public class SqlCategoryRepository : EntityRepository<Category>, ICategoryRepository
     {
         private readonly ApplicationDbContext _db;
-        public SqlCategoryRepository(ApplicationDbContext context) : base(context)
+        public SqlCategoryRepository(ApplicationDbContext db) : base(db)
         {
-            _db = context;
+            _db = db;
+        }
+
+        /// <summary>
+        /// Deletes a <see cref="Category"/> by id and re-categorize its posts to the given 
+        /// default category id.
+        /// </summary>
+        /// <remarks>
+        /// Since <see cref="Post.CategoryId"/> is nullable, there is no Cascade Delete between 
+        /// Post and Category, which happens to be what we want.  User can choose to delete a
+        /// category and we should delete all posts associated with that category, instead we
+        /// apply the default category on these posts. 
+        /// 
+        /// The defaultCategoryId is BlogSettings DefaultCategoryId, I choose to have it pass in
+        /// from BLL for convenience instead of querying Meta for it.
+        /// </remarks>
+        public async Task DeleteAsync(int id, int defaultCategoryId)
+        {
+            if (id == defaultCategoryId) return;
+
+            // remove it
+            var category = await _entities.SingleAsync(c => c.Id == id);
+            _db.Remove(category);
+
+            // update its posts to default category
+            var posts = _db.Set<Post>().Where(p => p.CategoryId == id);
+            foreach (var post in posts)
+            {
+                post.CategoryId = defaultCategoryId;
+            }
+
+            await _db.SaveChangesAsync();
         }
 
         /// <summary>
@@ -29,25 +60,14 @@ namespace Mok.Blog.Data
         public async Task<List<Category>> GetListAsync()
         {
             return await _entities.Select(
-                c => new Category
-                {
-                    Id = c.Id,
-                    Title = c.Title,
-                    Slug = c.Slug,
-                    Description = c.Description,
-                    Count = _db.Set<Post>().Where(p => p.CategoryId == c.Id && p.Status == EPostStatus.Published).Count(),
-                }).OrderBy(c => c.Title).ToListAsync();
-        }
-
-        public async Task DeleteAsync(int id, int defaultCategoryId)
-        {
-            if (id == defaultCategoryId) return;
-
-            // remove it
-            var category = await _entities.SingleAsync(c => c.Id == id);
-            _db.Remove(category);
-
-            await _db.SaveChangesAsync();
+                    c => new Category
+                    {
+                        Id = c.Id,
+                        Title = c.Title,
+                        Slug = c.Slug,
+                        Description = c.Description,
+                        Count = _db.Set<Post>().Where(p => p.CategoryId == c.Id && p.Status == EPostStatus.Published).Count(),
+                    }).OrderBy(c => c.Title).ToListAsync();
         }
     }
 }
