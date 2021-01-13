@@ -77,7 +77,7 @@ namespace Mok.WebApp
             services.AddStorageProvider(Configuration);
 
             // Plugins
-            services.AddPlugins(Env);
+            //services.AddPlugins(Env);
 
             // Scrutor 
             services.Scan(scan => scan
@@ -129,25 +129,25 @@ namespace Mok.WebApp
             services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
 
             // RCLs to monitor
-            if (Env.IsDevelopment())
-            {
-                string[] extDirs = { "Plugins", "SysPlugins", "Themes", "Widgets" };
-                string[] extPaths = { };
+            //if (Env.IsDevelopment())
+            //{
+            //    string[] extDirs = { "Plugins", "SysPlugins", "Themes", "Widgets" };
+            //    string[] extPaths = { };
 
-                foreach (var extDir in extDirs)
-                {
-                    var dirPath = Directory.GetDirectories(Path.GetFullPath(Path.Combine(Env.ContentRootPath, "..", "..", extDir)));
-                    extPaths = extPaths.Concat(dirPath).ToArray();
-                }
+            //    foreach (var extDir in extDirs)
+            //    {
+            //        var dirPath = Directory.GetDirectories(Path.GetFullPath(Path.Combine(Env.ContentRootPath, "..", "..", extDir)));
+            //        extPaths = extPaths.Concat(dirPath).ToArray();
+            //    }
 
-                builder.AddRazorRuntimeCompilation(options =>
-                {
-                    foreach (var path in extPaths)
-                    {
-                        options.FileProviders.Add(new PhysicalFileProvider(path));
-                    }
-                });
-            }
+            //    builder.AddRazorRuntimeCompilation(options =>
+            //    {
+            //        foreach (var path in extPaths)
+            //        {
+            //            options.FileProviders.Add(new PhysicalFileProvider(path));
+            //        }
+            //    });
+            //}
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
